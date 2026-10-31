@@ -1,0 +1,3 @@
+Sample	Asym.mRp.clN_peaks	Control.mRp.clN_peaks
+Asym	165534.0	
+Control		72308.0

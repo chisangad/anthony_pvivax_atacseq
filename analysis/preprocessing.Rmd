@@ -1,0 +1,504 @@
+---
+title: "Pre-processing and Quality Control Checks"
+bibliography: references.bib
+link-citations: true
+editor_options:
+  chunk_output_type: inline
+---
+
+# Introduction
+
+13 bulk ATAC-seq samples sequenced at the Hudson were received from Anthony of the Hansen Lab on the 23/09/2026. The 13 samples are prepared from sorted human monocyte cells. 
+
+```{r setup,include=F,echo=FALSE}
+options(bitmapType='cairo')
+knitr::opts_chunk$set(
+  echo = F,
+  dpi = 150,
+  error=FALSE,
+  warning = F,
+  dev = c("png","pdf"),
+  message = F)
+```
+
+
+```{r setup2,warning=F,include=F}
+source("code/globalfun.R")
+```
+
+# Pre-processing of raw data
+
+Processing of the raw data including quality control checks, trimming, alignment and initial peak calling was done using the [nf-core/atacseq v2.1.2](https://doi.org/10.5281/zenodo.2634132)[@harshil_patel_2023_8222875], a description of the output can be found [here](https://nf-co.re/atacseq/2.1.2/docs/output/). Pre-processing was done on the [M3-Massive HPC](https://docs.erc.monash.edu/Compute/HPC/M3/) cluster using the following script:
+
+```{bash run-nfcore-atacseq, eval=F}
+#!/bin/bash
+workdir=NK_cells/
+mkdir -p $workdir
+cd $workdir
+
+# Load necessary modules
+module load nextflow
+export NXF_SINGULARITY_CACHEDIR="~/ws30_scratch2/Chisangad/singularity/"
+export APPTAINER_CACHEDIR="~/ws30_scratch2/Chisangad/.apptainer/"
+samplesheet=data/samplesheet_ATAC.csv
+profile_config=~/ws30_scratch2/Chisangad/BioinfoTools/NFCore_profiles/NFCore_CutnRun.config
+
+nextflow run nf-core/atacseq --input ${samplesheet} -c ${profile_config} \
+-profile 'slurm,singularity' \
+  --genome GRCh38 \
+  --mito_name chrM \
+  --macs_gsize 2913022398 \
+  --outdir NFCore_ATACseq \
+  -resume \
+  --narrow_peak true \
+  --blacklist ~/ws30_scratch2/Chisangad/genomes/blacklist/hg38-blacklist.v2.bed \
+  -bg true
+```
+
+
+# Quality control checks
+
+The quality control checks were performed using the [MultiQC](https://multiqc.info/) tool [@ewels2016multiqc], which aggregates results from multiple tools into a single report. The MultiQC report can be found be found [here](docs/multiqc/narrow_peak). The following sections provide an overview of the quality control metrics for each sample.
+
+## FastQC Status Check
+
+Status for each FastQC section showing whether results seem entirely normal (green), slightly abnormal (orange) or very unusual (red)
+
+```{r multiqc-path}
+multiqc_path<-"docs/multiqc/narrow_peak/multiqc_data"
+```
+
+```{r read-in-multiqc-data, echo=F, eval=FALSE,include=FALSE}
+#Read all the processed results once!
+fastqc_heat.data <- read.table(
+  file.path(multiqc_path, "/fastqc-status-check-heatmap-1.tsv"),
+  sep = "\t",
+  stringsAsFactors = F,
+  col.names = c("Name", "Sample", "Value"),
+  header = T
+) %>% pivot_wider(
+  names_from = Name,
+  # The column to get new column names from
+  values_from = Value      # The column to get cell values from
+) %>% tibble::column_to_rownames(var = "Sample") %>% as.matrix()
+
+fastqc.seqcount1 <- read.delim(
+  paste0(
+    multiqc_path,
+    "/mqc_fastqc_sequence_counts_plot_1.txt"
+  ),
+  sep = "\t",
+  header = T
+) %>% pivot_longer(
+  cols = c("Unique.Reads", "Duplicate.Reads"),
+  names_to = "Read_Type",
+  values_to = "Count"
+)
+
+trim.filt_reads <- read.delim(
+  file.path(
+    multiqc_path,
+    "/mqc_cutadapt_filtered_reads_plot_1.txt"
+  ),
+  header = T
+)
+trim.seq_counts<- read.delim(file.path(
+  multiqc_path,
+  "mqc_cutadapt_trimmed_sequences_plot_3_Counts.txt"
+),header = T)
+
+align.stats <- read.delim(file.path(
+  multiqc_path, "mqc_samtools_alignment_plot_1.txt")) %>% mutate(Total=Mapped+Unmapped) %>% 
+  mutate(PropUnmapped=Unmapped/Total*100,PropMapped=Mapped/Total*100)
+
+dup.stats <- read.delim(file.path(
+  multiqc_path,
+  "mqc_picard_deduplication_1.txt")) %>%
+  pivot_longer(cols = c("Unique.Pairs","Duplicate.Pairs.Optical",
+                        "Duplicate.Pairs.Nonoptical"),
+               names_to = "Stats",values_to = "Reads")
+
+peak.qual <- read.csv(file.path(multiqc_path,"/PeakMetrics.csv"))
+peak_count.stats_conc <- as.matrix(read.delim(
+  file.path(multiqc_path,"/multiqc_mrep_peak_count-plot.txt"),
+  fill = T,
+  header = T,
+  row.names = 1
+))
+
+FRiP.stats_conc <- as.matrix(read.delim(
+  file.path(multiqc_path,"/multiqc_mrep_frip_score-plot.txt"),
+  fill = T,
+  header = T,
+  row.names = 1
+))
+
+frip.plot_data<-data.frame(
+  Sample=rownames(FRiP.stats_conc),
+  FRiP=diag(FRiP.stats_conc)*100
+)
+
+peak.annotation_stats <- read.delim(
+  file.path(multiqc_path,"/multiqc_mlib_peak_annotation-plot.txt")
+) %>%   pivot_longer(
+  cols = c(
+    "Intergenic",
+    "TTS",
+    "Unassigned",
+    "exon",
+    "intron",
+    "promoter.TSS"
+  ),
+  names_to = "Stats",
+  values_to = "Peak_count"
+)
+peak.annotation_stats$group <- gsub("_REP.*","",peak.annotation_stats$Sample)
+peak.annotation_stats <- peak.annotation_stats %>% mutate(Stats=forcats::fct_reorder(Stats,Peak_count,.desc = F))
+
+annotation.conc.stats<-read.delim(
+  file.path(multiqc_path,"/multiqc_mrep_peak_annotation-plot.txt"),
+  fill = T,
+  header = T
+) %>%   pivot_longer(
+  cols = c(
+    "Intergenic",
+    "TTS",
+    "Unassigned",
+    "exon",
+    "intron",
+    "promoter.TSS"
+  ),
+  names_to = "Stats",
+  values_to = "Peak_count"
+) %>% mutate(Stats=forcats::fct_reorder(Stats,Peak_count,.desc = F))
+
+fcounts.stats <- read.delim(file.path(
+  multiqc_path,
+  "/multiqc_featureCounts_mlib_featurecounts.txt"
+)) %>%   pivot_longer(
+  cols = c(
+   "Assigned","Unassigned_NoFeatures","Unassigned_Overlapping_Length"),
+  names_to = "Stats",
+  values_to = "Reads"
+) #%>% mutate(Stats=forcats::fct_reorder(Stats,Reads,.desc = T))
+
+save(
+  fastqc_heat.data,
+  fastqc.seqcount1,
+  trim.filt_reads,
+  trim.seq_counts,
+  align.stats,
+  dup.stats,
+  peak.qual,
+  peak_count.stats_conc,
+  FRiP.stats_conc,
+  frip.plot_data,
+  peak.annotation_stats,
+  annotation.conc.stats,
+  fcounts.stats,
+  file = "output/processed_data.RData"
+)
+```
+
+```{r load-saved-multiqc-data}
+load("output/processed_data.RData")
+```
+
+## Overall FastQC Status Check
+
+The heatmap below shows the overall FastQC status check for each sample before trimming. The heatmap uses a color scheme to indicate the quality of the sequencing data, with green indicating normal results, orange indicating slightly abnormal results, and red indicating very unusual results. The heatmap provides a quick overview of the quality of the sequencing data for each sample, allowing for easy identification of any potential issues that may need to be addressed before downstream analysis.
+
+```{r heatmap-after-trimming, fig.height=10,fig.width=16, fig.cap="FastQC status check post trimming - normal - green, slightly abnormal-orange or very unusual - red"}
+ComplexHeatmap::Heatmap(
+  fastqc_heat.data,
+  col = c("red", "orange", "lightgreen"),
+  show_row_dend = F,
+  show_column_dend = F,
+  cluster_columns = F,
+  row_names_gp = grid::gpar(fontsize = 12),
+  heatmap_legend_param = list(title = "")
+)
+```
+\FloatBarrier
+
+## Sequence Counts
+
+The plots below show the quality scores for the sequences for each library and estimated levels of duplication per library.
+
+```{r mean-qc-scores-seq-counts-plots, fig.cap="Mean Quality Scores and Sequence counts for each sample", fig.width=14, fig.height=16, echo=FALSE}
+bar.fastqc_seq <- ggplot(fastqc.seqcount1, aes(x = Sample, y = Count, fill = Read_Type)) +
+  geom_col() +
+  coord_flip() + # Flip coordinates to make it horizontal
+  scale_y_continuous(labels = scales::label_number(scale_cut = scales::cut_short_scale())) +
+  labs(title = "Distribution of Unique vs Duplicate Reads per Sample",
+       x = "Sample",
+       y = "Number of Reads",
+       fill = "Read Type") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 1,
+      vjust = 1
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+fastqc.seqqual <- read.delim(
+  paste0(
+    multiqc_path,
+    "/mqc_fastqc_per_base_sequence_quality_plot_1.txt"
+  ),
+  sep = "\t",
+  header = T
+)
+fastqc.seqqual <- pivot_longer(
+  fastqc.seqqual,
+  cols = colnames(fastqc.seqqual)[-1],
+  names_to = "Position",
+  values_to = "Phred_Score"
+)
+fastqc.seqqual$Position <- as.numeric(gsub("X", "", fastqc.seqqual$Position))
+
+fastqc.seqqual_fig<-ggplot(fastqc.seqqual,aes(x=Position,y=Phred_Score,colour=Sample))+
+    geom_line()+
+    scale_x_continuous(breaks =fastqc.seqqual$Position)+
+    labs(title = "Mean Quality Scores",
+       x = "Position (bp)",
+       y = "Phred Score") +
+  theme_minimal()+
+  theme(
+    legend.title = element_text(size = rel(0.8)), # 80% of base size for title
+    legend.text = element_text(size = rel(0.8)),   # 80% of base size for labels
+    axis.text.x = element_text(
+      hjust = 1,
+      vjust = 1,
+      size = rel(0.8)))
+
+(fastqc.seqqual_fig/bar.fastqc_seq)
+```
+\FloatBarrier
+
+## Number of reads after trimming
+
+The figures below provide an overview of the number of reads after trimming for adaptor sequences.
+
+```{r load-trimmed-seq-counts}
+trim.seq_counts<-pivot_longer(
+  trim.seq_counts,
+  cols = colnames(trim.seq_counts)[-1],
+  names_to ="Positions",
+  values_to = "Counts")
+
+trim.seq_counts$Positions<-as.numeric(gsub("^X","",trim.seq_counts$Positions))
+trim.filt_reads$Group<-gsub("_REP.*","",trim.filt_reads$Sample)
+
+```
+
+
+```{r barplot-reads-after-trimming, fig.cap="Number of reads passing filters after trimming",fig.height=14,fig.width=14, echo=FALSE}
+bar.cut_trim <- ggplot(trim.filt_reads, aes(
+  x = Sample, y = Reads.passing.filters,fill = Group)) +
+  geom_col() +
+  coord_flip() + # Flip coordinates to make it horizontal
+  scale_y_continuous(labels = scales::label_number(
+    scale_cut = scales::cut_short_scale())) +
+  labs(title = "Number of reads passing filters",
+       x = "",
+       y = "Counts",
+       fill= "Group") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 1,
+      vjust = 1
+    ),
+    axis.text.y = element_text(
+      size = 14
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+trim.seq_counts_fig<-ggplot(trim.seq_counts,aes(x=Positions,y=Counts,colour=Sample))+
+    geom_line()+
+    scale_x_continuous(breaks =trim.seq_counts$Positions)+
+    labs(title = "Lengths of Trimmed Sequences (3'end)",
+       x = "Position (bp)",
+       y = "Counts") +
+  theme_minimal()+
+  theme(
+    legend.title = element_text(size = rel(0.8)), # 80% of base size for title
+    legend.text = element_text(size = rel(0.8)),   # 80% of base size for labels
+    axis.text.x = element_text(
+      hjust = 1,
+      vjust = 1,
+      size = rel(0.8) 
+    ),
+  )
+
+(bar.cut_trim / trim.seq_counts_fig)
+```
+
+
+\FloatBarrier
+
+## Alignment
+
+Read alignment was performed using bwa as part of the NFCore/ATAC pipeline against the Human **GRCh38** reference genome. The plots below show the number of reads aligning to the reference genome and the proportion of reads that were mapped and unmapped for each sample.
+
+### Proportion of mapped reads
+
+The barplot below shows the proportion of mapped and unmapped reads for each sample.Overall, the mapping efficiency was high for all samples, with most samples having a mapping rate above 90%. This indicates that the majority of reads were successfully aligned to the reference genome, suggesting good quality of the sequencing data.
+
+```{r read-in-align-stats}
+align.stats <-
+  pivot_longer(align.stats,
+    cols = c(
+      "PropUnmapped",
+      "PropMapped"
+    ),
+    names_to = "Stat",
+    values_to = "Percentage")
+```
+
+```{r barplot-mapping-stats,fig.cap="Barplot showing mapping stats", fig.height=6,fig.width=12}
+ggplot(align.stats, aes(
+  x = Sample, y = Percentage,fill =Stat)) +
+  geom_col() +
+  coord_flip() + 
+  scale_y_continuous(labels = scales::label_number(
+    scale_cut = scales::cut_short_scale())) +
+  labs(title = "Alignment Stats",
+       x = "Sample",
+       y = "Percentage",
+       fill= "Stat") +
+    geom_text(
+    aes(label = paste0(round(Percentage,digits = 1),"%")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 1,
+      vjust = 1
+    ),
+    axis.text.y = element_text(
+      size = 14
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+\FloatBarrier
+
+
+### Proportion of duplicate and unique reads
+
+The barplot below shows the proportion of duplicate and unique reads for each sample. Overall, the proportion of non-optical duplicates (PCR duplicates) was high for 5 of the 8 samples which may indicate that the libraries were over-amplified during PCR. The proportion of optical duplicates was low for all samples, suggesting that the sequencing process was efficient and did not introduce significant technical artifacts.
+
+```{r read-in-duplication-stats}
+dup.stats$Percentage<-apply(dup.stats,1, function(x){
+  as.numeric(x[["Reads"]])/sum(as.numeric(dup.stats$Reads[dup.stats$Sample==x[["Sample"]]]))*100
+})
+unique.stats<-dup.stats[dup.stats$Stats=="Unique.Pairs",]
+```
+
+
+```{r barplot-duplicate-unique-reads, fig.cap="Barplot showing the proportion of duplicate and unique reads", fig.width=12,fig.height=6}
+ggplot(dup.stats, aes(
+  x = Sample, y = Percentage,fill =Stats)) +
+  geom_col() +
+  coord_flip() + 
+  scale_y_continuous(labels = scales::label_number(
+    scale_cut = scales::cut_short_scale())) +
+  labs(title = "Deduplication stats",
+       x = "Sample",
+       y = "Percentage",
+       fill= "Stat") +
+  geom_text(
+    aes(label = paste0(round(Percentage,digits = 1),"%")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 1,
+      vjust = 1
+    ),
+    axis.text.y = element_text(
+      size = 14
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+\FloatBarrier
+
+# References
+
+<div id="refs"></div>
+
+\FloatBarrier
+
+# Appendix
+
+## IGV files
+
+You can download IGV files on the following link that can be used to visualize the peaks and other genomic features in the Integrative Genomics Viewer (IGV) software. The IGV files include the necessary data and annotations to facilitate the exploration of the ATAC-seq results in a user-friendly manner. 
+
+You can open the IGV files using the session file in 'igv/narrow_peak/igv_session.xml'. The session file contains the necessary configuration to load the IGV files and display the relevant tracks for the ATAC-seq analysis.
+
+[Download IGV files](https://filesender.aarnet.edu.au/?s=download&token=473aa482-1ce4-4794-bc11-5c55f419e094){target="_blank"}
+
+## MultiQC Report
+
+The MultiQC report provides a comprehensive overview of the quality control metrics for each sample. It aggregates results from multiple tools into a single report, allowing for easy identification of any potential issues that may need to be addressed before downstream analysis. The report includes information on sequence quality, adapter content, duplication levels, and other important metrics.
+
+```{r embed-multiqc, echo=FALSE, out.width="100%"}
+knitr::include_url("multiqc/narrow_peak/multiqc_report.html", height = "800px")
+```
+
+[Open MultiQC Report in a new tab](multiqc/narrow_peak/multiqc_report.html){target="_blank"}
+
+\FloatBarrier
+
+```{r,include=FALSE}
+include_dir_download("docs/multiqc/narrow_peak","MultiQC_Report")
+```
+
+\FloatBarrier
+
+## All Code used in this analysis
+
+The following section provides a comprehensive overview of all the code chunks used in this analysis. Each code chunk is labeled with its corresponding name, allowing for easy reference and reproducibility of the analysis.
+
+```{r appendix, echo=FALSE, results='asis'}
+# Get all chunk labels in the document
+labels <- knitr::all_labels()
+
+# Exclude this specific chunk so it doesn't print its own generation code
+labels <- labels[labels != "appendix"]
+
+# Loop through each label, print a markdown header, and then the code block
+for (label in labels) {
+  # Print the header (you can change the #### to adjust the heading size)
+  cat("#### Chunk: `", label, "`\n\n", sep = "")
+  
+  # Print the opening of the code block
+  cat("```r\n")
+  
+  # Fetch and print the actual code from the chunk
+  cat(knitr::knit_code$get(label), sep = "\n")
+  
+  # Print the closing of the code block
+  cat("\n```\n\n")
+}
+```
+
+\newpage
+
+## Session Information

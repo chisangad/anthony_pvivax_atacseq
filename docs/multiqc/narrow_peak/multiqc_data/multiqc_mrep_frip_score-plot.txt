@@ -1,0 +1,3 @@
+Sample	Asym	Control
+Asym	0.131056	
+Control		0.110079

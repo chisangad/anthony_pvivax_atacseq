@@ -1,0 +1,1288 @@
+---
+title: "Differential Accessbility Analysis"
+bibliography: references.bib
+link-citations: true
+editor_options:
+  chunk_output_type: inline
+---
+
+# Introduction
+
+Differential accessibility analysis was performed using the [limma-voom pipeline](https://doi.org/10.1186/gb-2014-15-2-r29)[@law2014voom;@ritchie2015limma] to identify peaks that were differentially accessible between Asymptomatic and Healthy Controls.
+
+```{r setup,include=F,echo=FALSE}
+options(bitmapType='cairo')
+```
+
+```{r setup2,warning=F,include=F}
+#Create directories for analysis
+source("code/globalfun.R")
+```
+
+```{r read-in-sample-sheet}
+sample.sheet<-readRDS("output/sample_sheet.valid.rds")
+sample.sheet$group<-factor(sample.sheet$group.x)
+sample.sheet$batch<-factor(sample.sheet$batch)
+```
+
+```{r set-filters,echo=TRUE}
+#Filters used in the analysis
+cpm.filt<-8 # minimum counts per million
+FDR.cutoff <- 0.05 #FDR used in differential accessibility analysis
+FC.cutoff <- 1.5 #Fold change used to filter differentially accessible peaks
+enrich.pval <- 0.01 #P-value used to filter enriched pathways/temrs
+```
+
+```{r load-multiqc-data}
+load("output/processed_data.RData")
+```
+
+# Read Summarisation
+
+Summarisation of reads to peaks was performed using *featureCounts* [@liao2014featurecounts] a function from **Rsubread** [@liao2019r;@liao2013subread] within the NFCore/ATAC pipeline.
+
+```{r bar-plot-number-of-features-assigned, fig.height=10,fig.width=12, fig.cap="featureCounts: Assignments", echo=F}
+ggplot(fcounts.stats, aes(
+  x = Sample, y = Reads,fill=Stats)) +
+  geom_col() +
+  coord_flip() + 
+  labs(title = "",
+       x = "",
+       y = "# Reads",
+       fill= "Stats") +
+  geom_text(
+    aes(label = paste0(round(Reads/1000000,2),"M")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 1,
+      vjust = 1,
+      size = 12 
+    ),
+    axis.text.y = element_text(
+      size = 12 
+    ),
+    plot.title = element_text(hjust = 0.8)
+  )
+```
+
+\FloatBarrier
+
+## Annotation of Summarised Peak Counts
+
+Summarised peak counts were annotated to the human genome (GRCh38) using the *annotatePeaks* function in **homer**[@heinz2010simple] and then used to generate a digital expression matrix for downstream analysis.
+
+```{bash re-run-annotation, eval=F}
+#Reannotate concensus peaks
+source ~/.bashrc
+workdir=$(realpath $(dirname $0)|xargs -n1 dirname)
+annotatePeaks.pl ${workdir}/output/NFCore_ATACseq/bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.bed  hg38 -cpu 6 > \
+${workdir}/output/NFCore_ATACseq/bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.annotatePeaks2.txt
+```
+
+```{r load-annotate-fcounts,eval=FALSE}
+suppressMessages(library(org.Hs.eg.db))
+fcounts <- read.table(
+  "output/NFCore_ATACseq//bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.featureCounts.txt",
+  sep = "\t",
+  header = T
+)
+annotation.info <- read.delim(
+  "output/NFCore_ATACseq//bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.annotatePeaks2.txt",
+  sep = "\t",
+  header = T
+)
+annotation.info$Annotation2 <- unlist(lapply(annotation.info$Annotation, 
+    function(y) trimws(strsplit(y, "\\(")[[1]][1])))
+colnames(annotation.info)[1] <- "PeakID"
+dge <- DGEList(fcounts,
+               annotation.columns = c("Geneid", "Chr", "Start", "End", "Strand", "Length"))
+colnames(dge)<-gsub(".mLb.*","",colnames(dge))
+dge<-dge[,gsub("_T1","",sample.sheet$sample)]
+rownames(dge)<-dge$genes$Geneid
+dge$genes <- cbind(dge$genes, annotation.info[match(dge$genes$Geneid, annotation.info$PeakID), -c(1:5)])
+save(dge, file = "output/dge.RData")
+```
+
+```{r load-dge}
+load("output/dge.RData")
+```
+
+```{r get-peak-annotation-distribution}
+counts.dist <- dge$counts %>% as.data.frame %>% 
+  pivot_longer(cols = colnames(dge),
+               names_to = "Sample",
+               values_to = "counts")
+```
+
+```{r density-plot, fig.cap="Density plot showing the distribution of peak counts"}
+plotDensities(dge, legend = "topright", args.lengend = list(cex = 0.2))
+```
+
+\FloatBarrier
+
+The Melbourne control sample was excluded from the rest of the analysis.
+```{r}
+#Exclude Melbourne control sample from analysis
+dge<-dge[,!grepl("Melb",colnames(dge))]
+sample.sheet<-sample.sheet[!grepl("Melb",sample.sheet$group),]
+sample.sheet$group<-factor(sample.sheet$group)
+```
+
+```{r}
+sample.sheet$group<-factor(with(sample.sheet,paste0(group,"_",stim.unstim)))
+```
+
+```{r set-group-colours}
+library(RColorBrewer)
+o <- order(sample.sheet$group)
+qual_col_pals = brewer.pal.info[
+  brewer.pal.info$category == "qual" &
+  brewer.pal.info$colorblind, ]
+col_vector = unlist(mapply(brewer.pal, qual_col_pals$maxcolors, rownames(qual_col_pals)))
+cols = col_vector[1:length(unique(sample.sheet$group)) + 1][factor(sample.sheet$group)]
+```
+
+\FloatBarrier
+
+## Design matrix
+
+The 'group' column from Table 1 was used to generate the design matrix for the linear model, which was then used to fit the model to the data. The design matrix includes information about the experimental conditions and any potential batch effects that need to be accounted for in the analysis.
+
+```{r design-matrix-creation}
+sample.sheet$group<-factor(sample.sheet$group)
+design.matrix <- model.matrix( ~ 0+group+batch, sample.sheet)
+design.matrix_no_batch<-model.matrix(~0+group,sample.sheet)
+colnames(design.matrix) <- gsub("-", "_", gsub(
+  "group|batch", "", colnames(design.matrix)))
+colnames(design.matrix_no_batch) <- gsub("-", "_", gsub(
+  "group", "", colnames(design.matrix_no_batch)))
+min.samples <- min(colSums(design.matrix))
+design.matrix
+```
+
+
+```{r pie-chart-annotation, fig.height=6,fig.width=8,fig.cap="Distribution of annotation regions"}
+library(ggrepel)
+annot.dist <- table(dge$genes$Annotation2) %>% data.frame() %>% mutate(
+  percentage = Freq / sum(Freq) * 100,
+  label_text = paste0(round(percentage, digits = 1), "%"),
+  legend_label = paste0(Var1, " (", label_text, ")"),
+  is_small = percentage < 7,
+  label_pos = cumsum(percentage) - 0.5 * percentage
+) %>% arrange(Var1)
+
+# Create the pie chart
+pie.chart <- ggplot(annot.dist, aes(x = "", y = Freq, fill = legend_label)) +
+  geom_bar(stat = "identity",
+           width = 1,
+           color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text_repel(aes(label = legend_label),
+                  position = position_stack(vjust = 0.50),
+                  size = 8 / .pt) +
+  labs(fill = "Annotation") +
+  theme_void() +
+  theme(
+    legend.title = element_text(face = "bold"),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) +
+  theme(
+    axis.line = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5, color = "#666666")
+  )+Seurat::NoLegend()
+ggsave(pie.chart,
+       filename = paste0(plots.dir, "/Distribution-of-peaks-pie-chart.pdf"))
+print(pie.chart)
+```
+
+
+```{r}
+groups<-unique(sample.sheet$group)
+counts.cpms<-cpm(dge)
+counts.fit<-lmFit(counts.cpms,design = design.matrix)$coefficients[,groups]
+counts.fit_exp<-as.data.frame(counts.fit>0.5)
+counts.fit_exp$Annotation<-dge$genes$Annotation2
+counts.fit_exp <- counts.fit_exp %>% 
+  pivot_longer(,cols=1:length(groups),names_to = "Sample",values_to="Status") %>% 
+  group_by(Sample,Annotation) %>%
+  summarise(
+    Freq = sum(Status == TRUE, na.rm = TRUE) / nrow(counts.fit),
+    .groups = "drop"
+  )
+```
+
+```{r, fig.height=12,fig.width=12,fig.cap="Pie Chart showing the number of peaks and their associated region for each group"}
+pie.chart <- ggplot(counts.fit_exp, aes(x = "", y = Freq, fill = Annotation)) +
+  geom_bar(stat = "identity",
+           width = 1,
+           color = "white") +
+  facet_wrap(~Sample)+
+  coord_polar("y", start = 0) +
+  geom_text_repel(aes(label = paste0(Annotation,"(",format(round(Freq*100,digits = 1),nsmall=1),"%)")),
+                  position = position_stack(vjust = 0.50),
+                  size = 8 / .pt) +
+  labs(fill = "Annotation") +
+  theme_void() +
+  theme(
+    legend.title = element_text(face = "bold"),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) +
+  theme(
+    axis.line = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(hjust = 0.5, color = "#666666")
+  )+Seurat::NoLegend()
+ggsave(pie.chart,
+       filename = paste0(plots.dir, "/Distribution-of-peaks-pie-chart-by-group.pdf"))
+print(pie.chart)
+```
+
+\FloatBarrier
+
+## Sex-specific peak expression
+
+The expression of peaks assocated with sex-specific genes, DDX3Y and XIST, was examined across samples to assess the accuracy of sample sex annotation. The expression levels of these genes were visualized in a bar plot, with samples grouped by their respective conditions. This analysis helps to confirm the expected expression patterns of sex-specific genes in male and female samples.
+
+```{r get-cpm-sex-genes}
+cpm.sex <- cpm(dge) %>% as.data.frame() %>% filter(dge$genes$Gene.Name %in% c("DDX3Y","XIST")) %>% 
+  tibble::rownames_to_column(var = "Peak") %>% 
+  pivot_longer(cols = colnames(dge),
+               names_to = "Sample",
+               values_to = "cpm") %>% 
+  mutate(group =sample.sheet$group[match(Sample,sample.sheet$sample)],
+         Gene=dge$genes[match(Peak,dge$genes$Geneid),"Gene.Name"])
+```
+
+```{r sex-gene-barplot}
+ggplot(cpm.sex,aes(x=Sample,y=cpm,fill=group)) +
+  geom_bar(stat="identity",position = "dodge") +
+  facet_wrap(~Gene,scales = "free_y") +
+  labs(title = "",
+       x = "",
+       y = "cpm") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1,
+      vjust = 0.5,
+      size = 12 
+    ),
+    axis.text.y = element_text(
+      size = 12 
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+# Differential peak analysis
+
+To understand the differences in peak accessibility, the [limma-voom pipeline](https://doi.org/10.1186/gb-2014-15-2-r29)[@law2014voom;@ritchie2015limma] for differential analysis was used.
+
+\FloatBarrier
+
+## Peak filtering
+
+Peaks were excluded from further analysis if they did not satisfy the following conditions:
+
+\begin{itemize}
+\item did not have a cpm count \>= `r cpm.filt` in at least `r min.samples` libraries
+\end{itemize}
+
+```{r check-gene-types}
+is.pred <- grepl("^GM", dge$genes$Gene.Name)
+is.not_validID <- is.na(dge$genes$Entrez.ID) | is.na(dge$genes$Gene.Name) ==
+"NA"
+is.standard_Chr <- dge$genes$Chr %in% paste0("chr", c(1:23,
+"X"))
+```
+
+### Distribution of peak CPMs across samples
+
+The distribution of peak expression (cpm) across samples is shown in the figure below. The dashed line represents the minimum cpm threshold used for filtering peaks.
+```{r cpm-expression-violin,fig.height=8,fig.width=8, fig.cap="Distribution of peak expression (cpm) across samples"}
+cpm.exp<-cpm(dge) %>% as.data.frame() %>% pivot_longer(cols = colnames(dge),
+               names_to = "Sample",
+               values_to = "cpm") %>% mutate(group = sample.sheet$group[match(Sample,sample.sheet$sample)])
+ggplot(cpm.exp, aes(x = Sample, y = cpm, fill=group)) +
+  geom_violin() +
+  scale_y_log10() +
+  labs(title = "",
+       x = "",
+       y = "cpm") +
+  geom_hline(yintercept = cpm.filt,
+             color = "grey80",
+             linetype = "dashed") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 90,
+      hjust = 1,
+      vjust = 0.5,
+      size = 12 
+    ),
+    axis.text.y = element_text(
+      size = 12 
+    ),
+    plot.title = element_text(hjust = 0.5)
+  )
+
+```
+
+```{r check-how-many-peaks-pass-filter}
+is.expr <- rowSums(cpm(dge) >= cpm.filt) >= min.samples
+table(is.expr)
+keep.peaks<-!is.pred & !is.not_validID & is.standard_Chr &
+is.expr
+table(keep.peaks)
+```
+
+```{r save-dge-for-geo-submission}
+#Save digital expression for GEO submission
+geo.submission.dir<-"GEO_submission/"
+if(!dir.exists(geo.submission.dir)){
+  dir.create(geo.submission.dir, recursive = T)
+}
+saveRDS(dge, file = file.path(geo.submission.dir,"/ATACseq_raw_peak_counts_DGEList.rds"))
+```
+
+```{r}
+#Perform filter
+dgl.exp <- dge[keep.peaks, , keep.lib.size = FALSE]
+```
+
+```{r, echo=FALSE}
+cat("Number of peaks before filter:",format(nrow(dge),big.mark = ","),"\n")
+cat("Number of peaks after filter:",format(nrow(dgl.exp),big.mark = ","),"\n")
+```
+
+\FloatBarrier
+
+### MDS plot showing clustering of samples before normalisation
+
+The MDS plot below shows the clustering of samples before normalisation. The samples are coloured by their respective groups, and the shapes represent different batches. This plot provides an overview of the relationships between samples based on their peak accessibility profiles.
+
+```{r mds-plot-before-filter,fig.cap="MDS plot showing clustering of samples before nomalisation", fig.width=10,fig.height=8}
+samp.cols<-col_vector[1:length(levels(sample.sheet$group))][factor(sample.sheet$group)]
+pch<-c(15:(15+nlevels(sample.sheet$batch)))
+pch.plt <- pch[sample.sheet$batch]
+cex.pch <- 1.8
+par(mai = c(1, 1, 0.5, 2),xpd=T)
+  plt <- plotMDS(
+    dgl.exp,
+    cex = cex.pch,
+    cex.main = 1,
+    plot = TRUE,
+    pch = pch.plt,
+    col = samp.cols,
+    cex.lab = 0.9,
+    cex.axis = 0.7,
+    main = "MDS plot all samples before normalisation"
+  )
+    legend(
+    max(plt$x) + 0.2,
+    y = max(plt$y),
+    title = "Condition",
+    legend = levels(sample.sheet$group),
+    pch = 16,
+    cex = 0.9,
+    col = col_vector[1:length(levels(sample.sheet$group))],
+    bty = 'n'
+  )
+     legend(
+    max(plt$x) + 0.2,
+    y = mean(plt$y),
+    title = "Batch",
+    legend = levels(sample.sheet$batch),
+    pch = pch,
+    cex = 0.9,
+    bty = 'n'
+  )
+
+  basicPlotteR::addTextLabels(
+    xCoords = plt$x,
+    yCoords = plt$y,
+    labels = sample.sheet$Sample.ID,
+    cex.label = 0.7,
+    col.label = samp.cols,
+    col.line = "grey50")
+```
+
+\FloatBarrier
+
+
+## Voom transformation and normalisation
+
+```{r}
+norm.method<-"none"
+```
+
+The read counts were transformed using the *voom* [@law2014voom] function within **limma** [@ritchie2015limma] and then `r ifelse(norm.method=="none", "Library size",norm.method)` normalised as shown by the mean-variance trend estimated from the data in the plot below.
+
+```{r voom-norm, fig.height=6,fig.width=12, fig.cap="Voom: Mean - Variance trend plot"}
+par(cex.main = 0.8,
+    cex.axis = 0.6,
+    cex.lab = 0.7)
+y <- voomWithQualityWeights(
+  dgl.exp,
+  design = design.matrix,
+  plot = TRUE,
+  normalize.method = norm.method,
+)
+```
+
+\FloatBarrier
+
+### Distribution of peak expression post normalisation
+
+The distribution of peak expression (cpm) post normalisation is shown in the figure below. The boxplots represent the distribution of cpm values for each sample after applying the voom transformation and normalisation.
+
+```{r barplot-distr-,fig.cap="Distribution of peak expression post normalisation", fig.width=7,fig.height=5}
+par(mai = c(1, 1.2, 0.5, 0.2))
+boxplot(
+  y$E,
+  range = 0,
+  las = 2,
+  cex.axis = 0.6,
+  ylab = "cpm",
+  main = "Distribution of peak expression post normalisation",
+  cex.main = 1,
+  cex.lab = 0.9,
+  col = samp.cols
+)
+```
+
+\FloatBarrier
+
+```{r, eval=FALSE}
+#Create processed peak counts for GEO
+geo.path<-"GEO_submission/"
+if(!dir.exists(geo.path)){
+  dir.create(geo.path, recursive = T)
+}
+for(s in colnames(y$E)){
+  s.data<-cbind(y$genes[,c("Geneid",
+                                "Chr",
+                                "Start",
+                                "End",
+                                "Entrez.ID",
+                                "Gene.Name",
+                                "Strand")],
+                cpm = y$E[,s])
+  colnames(s.data)[ncol(s.data)]<-"log2cpm"
+  colnames(s.data)[1]<-"PeakID"
+  write.table(s.data,
+              file = file.path(
+                geo.path,
+                paste0(s,"_ATACseq_voom_normalised_peak_counts.tsv")
+              ),
+              sep = "\t",
+              row.names = FALSE,
+              quote = FALSE)
+}
+```
+
+```{r}
+# save cpm expression all samples
+y.exp = with(y, cbind(genes[, 
+    c("Geneid",
+        "Chr",
+        "Start",
+        "End",
+        "Entrez.ID",
+        "Gene.Name",
+        "Strand")], E))
+voom.out_path<-file.path(analysis.tables, "ATACseq-voom-merged-normalised-expression-peak-values.xlsx")
+openxlsx::write.xlsx(
+  y.exp,
+  file = voom.out_path
+)
+```
+
+\FloatBarrier
+
+```{r}
+generate_datatable(y.exp,show.rownames = F,caption="Summary of sample normalised expression values for each peak across samples")
+```
+
+\FloatBarrier
+
+```{r}
+include_file_download(path2file = voom.out_path,
+  filename = "ATACseq-voom-merged-normalised-expression-peak-values.xlsx")
+```
+
+### MDS plot showing clustering of samples after normalisation
+
+The MDS plot below shows the clustering of samples after normalisation. The samples are coloured by their respective groups, and the shapes represent different batches. This plot provides an overview of the relationships between samples based on their peak accessibility profiles after applying the voom transformation and normalisation.
+
+```{r mds-plot-after-norm-2,fig.cap="MDS plot showing clustering of samples", fig.width=10,fig.height=7}
+par(mai = c(1, 1, 0.5, 2), xpd = T)
+plt <- plotMDS(
+    y,
+    cex = cex.pch,var.explained = T,
+    cex.main = 1,
+    plot = TRUE,
+    pch = pch.plt,
+    col = samp.cols,
+    cex.lab = 0.9,
+    cex.axis = 0.7,
+    main = "MDS plot all samples after normalisation"
+  )
+    legend(
+    max(plt$x) + 0.2,
+    y = max(plt$y),
+    title = "Condition",
+    legend = levels(sample.sheet$group),
+    pch = 16,
+    cex = 0.9,
+    col = col_vector[1:length(levels(sample.sheet$group))],
+    bty = 'n'
+  )
+      legend(
+    max(plt$x) + 0.2,
+    y = mean(plt$y),
+    title = "Batch",
+    legend = levels(sample.sheet$batch),
+    pch = pch,
+    cex = 0.9,
+    bty = 'n'
+  )
+  basicPlotteR::addTextLabels(
+    xCoords = plt$x,
+    yCoords = plt$y,
+    labels =paste0(sample.sheet$Sample.ID,"_(",sample.sheet$sex,"_",sample.sheet$batch,")"),
+    cex.label = 0.7,
+    col.label = samp.cols,
+    col.line = "grey50"
+  )
+```
+
+### MDS plot showing clustering of samples after normalisation with batch removal
+
+The MDS plot below shows the clustering of samples after normalisation and batch effect removal. The samples are coloured by their respective groups, and the shapes represent different batches. This plot provides an overview of the relationships between samples based on their peak accessibility profiles after applying the voom transformation, normalisation, and batch effect removal.
+
+```{r mds-plot-after-norm-1,fig.cap="MDS plot showing clustering of samples after normalisation with batch removal", fig.width=10,fig.height=7}
+par(mai = c(1, 1, 0.5, 2), xpd = T)
+plt <- plotMDS(
+    removeBatchEffect(y,design = design.matrix_no_batch,batch=sample.sheet$batch),
+    cex = cex.pch,var.explained = T,
+    cex.main = 1,
+    plot = TRUE,
+    pch = pch.plt,
+    col = samp.cols,
+    cex.lab = 0.9,
+    cex.axis = 0.7,
+    main = "MDS plot all samples after normalisation"
+  )
+    legend(
+    max(plt$x) + 0.2,
+    y = max(plt$y),
+    title = "Condition",
+    legend = levels(sample.sheet$group),
+    pch = 16,
+    cex = 0.9,
+    col = col_vector[1:length(levels(sample.sheet$group))],
+    bty = 'n'
+  )
+      legend(
+    max(plt$x) + 0.2,
+    y = mean(plt$y),
+    title = "Batch",
+    legend = levels(sample.sheet$batch),
+    pch = pch,
+    cex = 0.9,
+    bty = 'n'
+  )
+  basicPlotteR::addTextLabels(
+    xCoords = plt$x,
+    yCoords = plt$y,
+    labels =paste0(sample.sheet$Sample.ID,"_(",sample.sheet$sex,"_",sample.sheet$batch,")"),
+    cex.label = 0.7,
+    col.label = samp.cols,
+    col.line = "grey50"
+  )
+```
+
+
+
+\FloatBarrier
+
+## Linear modelling
+
+A linear model was fitted to each peak, and empirical Bayes moderated t-statistics used to assess differences in accessibility between conditions. The fitted expression values for each peak across conditions are summarised in the table below. 
+
+```{r, message=FALSE,warning=FALSE}
+fit = lmFit(y, design = design.matrix,method="robust")
+fit.sav <- with(fit, cbind(genes, coefficients[
+  , 1:length(unique(sample.sheet$group))]))
+
+fit.sav_path<-file.path(analysis.tables, "ATACseq-condition-level-fitted-expression.xlsx")
+openxlsx::write.xlsx(
+  fit.sav,
+  file = fit.sav_path)
+```
+
+\FloatBarrier
+
+```{r}
+generate_datatable(fit.sav,show.rownames = F,caption="Summary of fitted expression values for each peak across conditions")
+```
+
+
+## Contrast design
+
+The following comparisons were made for each of the Histone markers;
+
+```{r contrast-design}
+contrast.matrix <- makeContrasts(
+    Asymptomatic_Stim.vs.Ustim=Asym_S-Asym_US,
+    Stim_Asymptomatic.vs.Control=Asym_S-Control_S,
+    Unstim_Asymptomatic.vs.Control=Asym_US-Control_US,
+    Control_Stim.vs.Unstim=Control_S-Control_US,
+    levels = colnames(design.matrix)
+)
+#contrast.matrix <- makeContrasts(
+#    Asymptomatic.vs.Control=Asym-Control,
+#    levels = colnames(design.matrix)
+#)
+```
+
+`r paste0("**",colnames(contrast.matrix),"**",collapse="\n")`
+
+Peaks were called differentially accessible if they achieved a False Discovery Rate of `r FDR.cutoff`.
+
+## Calling DA peaks 
+
+empirical Bayes moderated t-statistics were used to assess differences in accessibility between conditions, and peaks were called differentially accessible if they achieved a False Discovery Rate of `r FDR.cutoff`.
+
+```{r run-fitting-contrasts}
+fit.contrast<-contrasts.fit(fit, contrasts = contrast.matrix)
+fit2 <- eBayes(fit.contrast)
+```
+
+The table below shows the counts of differentially enriched peaks across each comparison made.
+
+```{r}
+dt.all <- decideTests(fit2, p.value = FDR.cutoff,method="global")
+summary(dt.all)
+```
+
+
+```{r}
+fold_change.path<-file.path(analysis.tables, "ATACseq-peaks-logFC.xlsx")
+openxlsx::write.xlsx(
+  with(fit2, cbind(genes, coefficients)),
+  file = fold_change.path
+)
+```
+
+```{r}
+generate_datatable(with(fit2, cbind(genes[,c("Chr","Start","End","Gene.Name")], coefficients)),show.rownames = F,
+                   caption="Summary of logFC values for each peak across comparisons")
+```
+
+\FloatBarrier
+
+```{r}
+include_file_download(path2file = fold_change.path,
+  filename = "ATACseq-peaks-logFC.xlsx")
+```
+
+
+
+```{r}
+comps.interest<-colnames(contrast.matrix)
+```
+
+```{r upset-plot-DA-peaks,warning=FALSE,error=FALSE, fig.cap="Upset plot showing shared differentially accessible peaks",fig.width=10,fig.height=7}
+library(UpSetR)
+df_upset <- as.data.frame(abs(dt.all[,comps.interest]))
+df_upset <- df_upset[rowSums(df_upset) > 0, ]
+upset(
+  df_upset,
+  sets = colnames(df_upset),
+  keep.order = TRUE,
+  mb.ratio = c(0.55, 0.45)
+)
+```
+
+```{r upset-plot-DAs-with-direction, fig.cap="Upset plot of DA peaks with direction included",fig.height=10,fig.width=12}
+res_df <- as.data.frame(dt.all[,comps.interest])
+direction_list <- lapply(names(res_df), function(col) {
+  data.frame(
+    Up = as.integer(res_df[[col]] == 1),
+    Down = as.integer(res_df[[col]] == -1)
+  )
+})
+direction_matrix <- do.call(cbind, direction_list)
+colnames(direction_matrix) <- unlist(lapply(names(res_df), function(col) {
+  c(paste0(col, "_Up"), paste0(col, "_Down"))
+}))
+upset(
+  direction_matrix, 
+  nsets = ncol(direction_matrix), 
+  number.angles = 0, 
+  point.size = 2.5, 
+  line.size = 1,
+  keep.order=T,
+  mainbar.y.label = "Number of common peaks", 
+  sets.x.label = "Peaks per Direction"
+)
+```
+
+```{r set-stage-comps}
+counts_df <- as.data.frame(summary(dt.all))
+plot_data <- counts_df %>%
+  filter(Var1 != "NotSig") %>%
+  mutate(
+    Direction = factor(ifelse(Var1 == "Up", "Up", "Down"), levels = c("Down", "Up")),
+    Comparison = Var2,
+    Count = Freq
+  )
+```
+
+```{r barplot-DA-peaks,fig.width=5,fig.height=6}
+plt <- ggplot(
+  plot_data,
+  aes(x = Comparison, y = Count, fill = Direction)
+) +
+  geom_col(
+    position = "stack",
+    width = 0.7,
+    color = "white",
+    linewidth = 0.8
+  ) + 
+  geom_text(
+    aes(label = Count),
+    position = position_stack(vjust = 0.5),
+    color = "white",
+    fontface = "bold",
+    size = 3.5
+  ) + 
+  scale_fill_manual(values = c("Up" = "#E41A1C", "Down" = "#377EB8")) +
+  labs(title = "", x = "", y = "Number of peaks", fill = "Status") +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+
+print(plt)
+plt.path <- paste0(plots.dir, "/Barplot-number-DAs.pdf")
+ggsave(plt, file = plt.path, height = 6, width = 3)
+```
+
+
+\FloatBarrier
+
+## Summary of top DA regions in pairwise comparisons
+
+The tables below show the counts of differentially accessible peaks across each comparison made. The top differentially accessible peaks for each comparison are also provided in the downloadable excel file below.
+
+
+```{r}
+top.de <- sapply(comps.interest, function(x) {
+  xx<-topTable(fit2,coef = x, number = Inf)
+  keep.de<-rownames(dt.all)[dt.all[,x]!=0]
+  xx[keep.de,]
+},simplify = F,USE.NAMES = T)
+
+sav.atac_topde<-file.path(analysis.tables, "ATACseq-differentially-accessible-peaks.xlsx")
+openxlsx::write.xlsx(
+  top.de,
+ file = sav.atac_topde)
+```
+
+\FloatBarrier
+
+```{r format-table}
+top.cols_show <- c('Geneid',
+                   'Gene.Name',
+                   'logFC',
+                   'AveExpr',
+                   't',
+                   'P.Value',
+                   'adj.P.Val')
+
+formatDataTable <- function(dt) {
+  formatRound(
+    table = dt,
+    columns = c('logFC', 'AveExpr', 't', 'P.Value', 'adj.P.Val'),
+    digits = 3,
+    mark = ","
+  )
+}
+```
+
+
+
+```{r render-dynamic-tables, warning=FALSE,error=FALSE,eval=FALSE}
+table_output <- lapply(names(top.de), function(group_name) {
+  tagList(
+    h3(paste("Comparison:", group_name)),
+    datatable(
+      head(top.de[[group_name]][, top.cols_show],20),
+      extensions = 'Scroller',
+      options = list(
+        deferRender = TRUE,
+        scrollY = 300,
+        scroller = TRUE,
+        pageLength = 10
+      ),
+      elementId = paste0("DE-tbl-", group_name)
+    )
+  )
+})
+
+tagList(table_output)
+```
+
+
+\FloatBarrier
+
+```{r}
+include_file_download(path2file = sav.atac_topde,
+  filename = "ATACseq-differentially-accessible-peaks")
+```
+
+\FloatBarrier
+
+## Volcano plots
+
+The volcano plots below show the distribution of differentially accessible peaks in `r colnames(contrast.matrix)`.
+
+```{r, fig.cap=paste0("Volcano plot of ",comps.interest), fig.width=8,fig.height=8}
+lfc_cutoff <- log2(FC.cutoff)
+top_n_labels <- 20
+down.col <- "steelblue"
+up.col <- "orange"
+no.de_col <- "lightgray"
+theme.extra <- theme(
+  plot.title = element_text(face = "bold", hjust = 0.5),
+  plot.subtitle = element_text(hjust = 0.5),
+  legend.position = "right",
+  panel.grid.minor = element_blank()
+)
+
+min.fdr <- ceiling(max(-log10(unlist(sapply(top.de,function(x) x$P.Value)))) + 2)
+max.lfc <- ceiling(max(abs(fit2$coefficients[,-ncol(fit2$coefficients)]))) + 2
+x_limits <- c(-max.lfc, max.lfc)
+y_limits <- c(-0.5, min.fdr)
+max_y <- min.fdr - 0.1
+min_x <- -max.lfc + 0.2
+max_x <- max.lfc - 0.2  
+  
+  
+for(comp in comps.interest)
+{
+  top.df <- topTable(fit2, coef = comp, number = Inf)
+  plot_data <- top.df %>%
+    mutate(
+      Expression = ifelse(as.numeric(dt.all[Geneid,comp])==1,"Up", 
+                          ifelse(as.numeric(dt.all[Geneid,comp])==-1,"Down","Not Significant")),
+      Expression = factor(Expression, levels = c("Not Significant", "Down", "Up"))
+    ) %>%
+    arrange(Expression) 
+    top_up <- plot_data %>%
+    filter(Expression == "Up") %>%
+    arrange(P.Value) %>% 
+    head(top_n_labels)
+    top_down <- plot_data %>%
+    filter(Expression == "Down") %>%
+    arrange(P.Value) %>% 
+    head(top_n_labels)
+    
+  top_genes <- bind_rows(top_up, top_down)
+  num_up <- format(sum(plot_data$Expression == "Up", na.rm = TRUE), 
+                   big.mark =",")
+  num_down <- format(sum(plot_data$Expression == "Down", na.rm = TRUE), 
+                     big.mark =",")
+  volcano_plot <- ggplot(plot_data, aes(
+    x = logFC,
+    y = -log10(P.Value),
+    color = Expression
+  )) + 
+    geom_point(alpha = 0.7, size = 1.5) + 
+    scale_color_manual(values = c(
+      "Up" = up.col,
+      "Down" = down.col,
+      "Not Significant" = no.de_col 
+    )) + # Add threshold lines
+    # geom_vline(
+    #   xintercept = c(-lfc_cutoff, lfc_cutoff),
+    #   linetype = "dashed",
+    #   color = "black",
+    #   alpha = 0.5
+    # ) +
+    # geom_hline(
+    #   yintercept = -log10(FDR.cutoff),
+    #   linetype = "dashed",
+    #   color = "black",
+    #   alpha = 0.5
+    # ) + # Text annotations for the total counts in the top corners
+    annotate(
+      "text",
+      x = max_x,
+      y = max_y,
+      label = paste("Up:", num_up),
+      hjust = 1,
+      vjust = 1,
+      size = 5,
+      fontface = "bold",
+      color = up.col
+    ) +
+    annotate(
+      "text",
+      x = min_x,
+      y = max_y,
+      label = paste("Down:", num_down),
+      hjust = 0,
+      vjust = 1,
+      size = 5,
+      fontface = "bold",
+      color = down.col
+    ) +
+    coord_cartesian(xlim = x_limits, ylim = y_limits)
+  
+  for (lab in c("unlabelled", "labelled"))
+  {
+    if (lab == "labelled")
+    {
+      # Add non-overlapping labels for top genes
+      ggsave.plt <- volcano_plot +
+        geom_text_repel(
+          data = top_genes,
+          aes(label = Gene.Name),
+          size = 3.5,
+          box.padding = 0.5,
+          point.padding = 0.3,
+          max.overlaps = Inf,
+          show.legend = FALSE,
+          color = "black"
+        ) +
+        theme_minimal() +
+        labs(
+          title = comp,
+          #subtitle = paste0("Cutoffs: adj.p < ", pval_cutoff),
+          x = expression("Log"[2] * " Fold Change"),
+          y = expression("-Log"[10] * " (P-Value)"),
+          color = "Status"
+        ) + theme.extra
+      print(ggsave.plt)
+    }
+    else
+    {
+      ggsave.plt <- volcano_plot + theme.extra
+    }
+    ggsave(
+      ggsave.plt,
+      file = paste0(
+        plots.dir,
+        "/Volcano_plots/",
+        comp,
+        "-",
+        lab,
+        ".pdf"
+      ),
+      height = 8,
+      width = 8
+    )
+  }
+}
+```
+
+\FloatBarrier
+
+
+```{r}
+include_dir_download(path2dir = file.path(plots.dir,"Volcano_plots/"),
+  dirname = "Volcano_plots"
+)
+```
+
+\FloatBarrier
+
+## Heatmap of Differential Accessible Peaks
+
+```{r, echo=FALSE}
+heatplots.dir <- file.path(plots.dir, "/Heatmaps/")
+if (!dir.exists(heatplots.dir))
+  dir.create(heatplots.dir, recursive = T)
+```
+
+
+```{r}
+top.DAs<-unique(unlist(lapply(top.de,function(x){
+  c(head(x[order(x$logFC,decreasing = T),"Geneid"],n=50),
+    head(x[order(x$logFC,decreasing = T),"Geneid"],n=50))
+}),recursive = T,use.names = F))
+```
+
+\FloatBarrier
+
+The heat-map below shows the expression pattern of a selected top differentially detected peaks in `r colnames(contrast.matrix)`.
+
+
+```{r heatmap-top-DARs, fig.cap="Heatmap of the top DARs", fig.height=15, fig.width=10,message=FALSE}
+
+heat.data <- fit[top.DAs,colnames(design.matrix_no_batch)]
+#print(class(heat.data))
+#rownames(heat.data$cofficients) <- heat.data$genes$Gene.Name
+#stop()
+plotHeatmap(
+  heat.data$coefficients,
+  plot.name = "Heatmap-of-top-DARs-all-comps",
+  main =  "Heatmap-of-DARs",
+  cexRow = 0.3,
+  cexCol = 0.4,
+  Colv = F,
+  key.genes = F
+)
+```
+
+
+
+\FloatBarrier
+
+# Pathway Enrichment Analysis
+
+GO and KEGG pathway enrichment for genes associated with differentially detected peaks was performed using functions implemented in **limma**. Note that the p-values indicated in the tables below are un-adjusted for multiple testing. This means that only enriched pathways with very small p-values should be considered.
+
+```{r}
+enrich.dir<-"docs/Pathway-enrichment/"
+if(!dir.exists(enrich.dir)) dir.create(enrich.dir)
+if(!dir.exists(enrich.dir)) dir.create(enrich.dir, recursive = TRUE)
+
+suppressMessages({
+  library(GO.db)
+  library(limma)
+  library(org.Hs.eg.db) # Annotation database for Human (use org.Mm.eg.db for Mouse)
+  library(AnnotationDbi)
+  library(openxlsx)
+})
+```
+
+```{r,eval=F}
+# Define species parameters
+species_code <- "Hs"        # "Hs" for Human, "Mm" for Mouse
+org_db       <- org.Hs.eg.db # Change to org.Mm.eg.db if working with Mouse
+kegg_links <- limma::getGeneKEGGLinks(species = "hsa")
+# Helper function to map genes to GO terms
+add_go_genes <- function(go_df, de_genes, db = org_db) {
+  if (is.null(go_df) || nrow(go_df) == 0) return(go_df)
+  
+  go_ids <- rownames(go_df)
+  
+  # Fetch GO to Entrez mapping
+  go2eg <- AnnotationDbi::mapIds(
+    db,
+    keys = go_ids,
+    column = "ENTREZID",
+    keytype = "GOALL",
+    multiVals = "list"
+  )
+  
+  # Fetch Entrez to Symbol mapping
+  eg2symbol <- AnnotationDbi::mapIds(
+    db,
+    keys = as.character(de_genes),
+    column = "SYMBOL",
+    keytype = "ENTREZID",
+    multiVals = "first"
+  )
+  
+  # Extract overlapping genes for each GO term
+  genes_col <- sapply(go_ids, function(id) {
+    term_entrez <- go2eg[[id]]
+    overlap <- intersect(as.character(de_genes), term_entrez)
+    symbols <- eg2symbol[overlap]
+    symbols <- symbols[!is.na(symbols)]
+    paste(symbols, collapse = ", ")
+  })
+  
+  go_df$Genes <- genes_col
+  return(go_df)
+}
+
+# Helper function to map genes to KEGG pathways
+add_kegg_genes <- function(kegg_df, de_genes, species = species_code, db = org_db) {
+  if (is.null(kegg_df) || nrow(kegg_df) == 0) return(kegg_df)
+  
+  pw_ids <- rownames(kegg_df)
+  
+  eg2symbol <- AnnotationDbi::mapIds(
+    db,
+    keys = as.character(de_genes),
+    column = "SYMBOL",
+    keytype = "ENTREZID",
+    multiVals = "first"
+  )
+  
+  genes_col <- sapply(pw_ids, function(id) {
+    path_entrez <- kegg_links$GeneID[kegg_links$PathwayID == id]
+    overlap <- intersect(as.character(de_genes), as.character(path_entrez))
+    symbols <- eg2symbol[overlap]
+    symbols <- symbols[!is.na(symbols)]
+    paste(symbols, collapse = ", ")
+  })
+  
+  kegg_df$Genes <- genes_col
+  return(kegg_df)
+}
+
+# Main loop
+
+
+enrich.rst <- sapply(names(top.de), function(comp) {
+  
+  x<-top.de[[comp]]
+  sapply(c("up", "down"),function(DAR.dir) {
+    if (DAR.dir == "up") {
+      genes.DAR <- x[x$logFC > 0, "Entrez.ID"]
+    } else {
+      genes.DAR <- x[x$logFC < 0, "Entrez.ID"]
+    }
+    
+    genes.DAR <- na.omit(genes.DAR)
+    
+    # Run GO and KEGG enrichment
+    comp.go <- goana(de = genes.DAR, species = species_code)
+    comp.ke <- kegga(de = genes.DAR, species = species_code)
+    
+    # Extract top results
+    comp.ke_top <- topKEGG(comp.ke, number = 100, p.value = enrich.pval)
+    
+    go.mf <- topGO(comp.go,
+                   number = 100,
+                   ontology = "MF",
+                   p.value = enrich.pval)
+    go.bp <- topGO(comp.go,
+                   number = 100,
+                   ontology = "BP",
+                   p.value = enrich.pval)
+    go.cc <- topGO(comp.go,
+                   number = 100,
+                   ontology = "CC",
+                   p.value = enrich.pval)
+    
+    # Append mapped gene symbols to each result table
+    comp.go_list <- list(
+      "GO.Molecular Function" = add_go_genes(go.mf, genes.DAR, db = org_db),
+      "GO.Biological Process" = add_go_genes(go.bp, genes.DAR, db = org_db),
+      "GO.Cellular Component" = add_go_genes(go.cc, genes.DAR, db = org_db),
+      "KEGG"                  = add_kegg_genes(comp.ke_top, genes.DAR, 
+                                               species = species_code, 
+                                               db = org_db)
+    )
+    
+    # Export to Excel
+    openxlsx::write.xlsx(
+      comp.go_list,
+      file = paste0(
+        enrich.dir,
+        "/Pathway-enrichment-for-genes-with-DARs-",
+        DAR.dir,
+        "-in-",
+        comp,
+        ".xlsx"
+      ),
+      rowNames = TRUE
+    )
+    
+    return(comp.go_list)
+  },simplify = F,USE.NAMES = T)
+},simplify = F,USE.NAMES = T)
+saveRDS(enrich.rst, file = paste0(enrich.dir, "/Pathways_enrich.RDS"))
+```
+
+
+```{r}
+enrich.rst<-readRDS(file = paste0(enrich.dir, "/Pathways_enrich.RDS"))
+```
+
+\FloatBarrier
+
+```{r, results='asis'}
+for(n in names(enrich.rst))
+{
+  cat("\n")
+  cat("## Enriched pathways for DARs in ",n,"\n")
+  cat("\n")
+  for(DAR_dir in names(enrich.rst[[n]]))
+  {
+    cat("### DARs",DAR_dir," in ",n,"\n")
+    cat("\n")
+    pathway_output <- lapply(names(enrich.rst[[n]][[DAR_dir]]), function(group_name) {
+      dt.table<-enrich.rst[[n]][[DAR_dir]][[group_name]]
+      if(length(dt.table)==0)
+        next  
+    tagList(
+      h3(group_name),
+      DT::datatable(
+        dt.table,
+        rownames = F,
+        options = list(scrollX = TRUE, autoWidth = TRUE),
+        width = "100%",
+        elementId = paste0("pathway-tbl-", n, "_", group_name)
+      )
+    )
+    })
+  }
+  
+  # Render all collected tag elements
+  print(tagList(pathway_output))
+  cat("\n")
+}
+```
+
+\FloatBarrier
+
+```{r}
+include_dir_download(path2dir =enrich.dir,dirname = "Pathway_enrichment_results")
+```
+
+
+# References
+
+<div id="refs"></div>
+
+\FloatBarrier
+
+# Appendix
+
+## All Code used in this analysis
+
+This section provides a comprehensive overview of all the R code chunks used throughout this analysis. It serves as a reference for reproducibility and transparency, allowing readers to understand the specific steps and functions employed in the data processing and analysis.
+```{r appendix, echo=FALSE, results='asis'}
+# Get all chunk labels in the document
+labels <- knitr::all_labels()
+
+# Exclude this specific chunk so it doesn't print its own generation code
+labels <- labels[labels != "appendix"]
+
+# Loop through each label, print a markdown header, and then the code block
+for (label in labels) {
+  # Print the header (you can change the #### to adjust the heading size)
+  cat("#### Chunk: `", label, "`\n\n", sep = "")
+  
+  # Print the opening of the code block
+  cat("```r\n")
+  
+  # Fetch and print the actual code from the chunk
+  cat(knitr::knit_code$get(label), sep = "\n")
+  
+  # Print the closing of the code block
+  cat("\n```\n\n")
+}
+```
+
+## Session Information

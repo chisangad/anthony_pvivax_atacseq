@@ -1,0 +1,14 @@
+Sample	Asym_REP1.mLb.clN_peaks	Asym_REP2.mLb.clN_peaks	Asym_REP3.mLb.clN_peaks	Asym_REP4.mLb.clN_peaks	Asym_REP5.mLb.clN_peaks	Asym_REP6.mLb.clN_peaks	Asym_REP7.mLb.clN_peaks	Control_REP1.mLb.clN_peaks	Control_REP2.mLb.clN_peaks	Control_REP3.mLb.clN_peaks	Control_REP4.mLb.clN_peaks	Control_REP5.mLb.clN_peaks	Melb_control_REP1.mLb.clN_peaks
+Asym_REP1	28286.0												
+Asym_REP2		13365.0											
+Asym_REP3			18990.0										
+Asym_REP4				38148.0									
+Asym_REP5					16201.0								
+Asym_REP6						41715.0							
+Asym_REP7							25159.0						
+Control_REP1								20554.0					
+Control_REP2									26611.0				
+Control_REP3										25039.0			
+Control_REP4											25597.0		
+Control_REP5												20535.0	
+Melb_control_REP1													27415.0

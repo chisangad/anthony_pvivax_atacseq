@@ -1,0 +1,3 @@
+Sample	Unique Pairs
+Asym	352233368.0
+Control	205644556.0

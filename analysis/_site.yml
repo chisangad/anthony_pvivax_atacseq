@@ -1,0 +1,28 @@
+name: "Anthony"
+output_dir: ../docs
+bibliography: references.bib
+link-citations: true
+navbar:
+  title: "ATAC-seq analysis of Monocytes from P-vivax"
+  author: "David Chisanga"
+  date: "`r Sys.Date()`"
+  left:
+  - text: Background
+    href: index.html
+  - text: Pre-processing and QC Checks
+    href: preprocessing.html
+  - text: Peak Calling and QC Check
+    href: peaks.html
+  - text: Differential Accessibility Analysis
+    href: differential_analysis.html
+  - text: Celltype Deconvolution
+    href: celltypecheck.html
+output:
+  workflowr::wflow_html:
+    toc: yes
+    toc_float: yes
+    toc_depth: 3
+    df_print: paged
+    theme: cosmo
+    highlight: textmate
+

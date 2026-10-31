@@ -1,0 +1,14 @@
+Sample	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40	12	24	40
+Asym_REP1																																							
+Asym_REP2																																							
+Asym_REP3																																							
+Asym_REP4																																							
+Asym_REP5																																							
+Asym_REP6																																							
+Asym_REP7																																							
+Control_REP1																																							
+Control_REP2																																							
+Control_REP3																																							
+Control_REP4																																							
+Control_REP5																																							
+Melb_control_REP1																																							

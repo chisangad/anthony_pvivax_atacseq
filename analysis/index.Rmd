@@ -1,0 +1,57 @@
+---
+title: "Background"
+site: workflowr::wflow_site
+author: "David Chisanga"
+bibliography: ../references.bib
+link-citations: true
+editor_options:
+  chunk_output_type: inline
+---
+
+# Introduction
+
+In this analysis, ATAC-seq data from monocytes from Asymptomatic Malaria patients and healthy controls is analysed. The data was received from Anthony of the Hansen Lab. The following is what Anthony would like from the analysis:
+
+Expected outputs/figures for the thesis include Transcription factor footprinting and motifs, Transcription Start Site (TSS) enrichment plot and heatmap, ATAC tracks, peak calling, peak annotation, differential accessibility volcano plot, as well as a PCA plot to illustrate variances in chromatin accessibility between the different conditions. 
+
+In addition, Anthony anticipates to see accessible chromatin peaks mostly around regulatory regions (promoters, enhancers, TSS's, etc.) associated with genes involved in inflammation and cellular signalling from human monocytes (e.g. IFNG, CXCL8, TNF-A, IL-6, MYD88 and PTGS2). 
+
+
+He also indicated that based on literature, there was potential to IL-10 signature. Specifically for those samples stimulated with LPS, he expects to see NFkB components such as transcription factors NFkB1, NFkB2 and RELA. With respect to monocyte lineage, PU.1 and AP-1 are important transcription factors for myeloid lineage development. Other specific genes would include CD14 and FCGR3A (CD16). 
+
+
+The NFCOre ATAC-seq pipeline was used to process the raw data. The pipeline was run on the M3 HPC. 
+
+```{r setup, message=FALSE, warning=FALSE,echo=FALSE}
+knitr::opts_chunk$set(
+  echo = F,
+  dpi = 150,
+  error=FALSE,
+  warning = F,
+  dev = c("png","pdf"),
+  message = F)
+library(tidyverse)
+```
+
+```{r,eval=FALSE}
+sample.sheet<-read.csv("output/NFCore_ATACseq/pipeline_info/samplesheet.valid.csv",header=T)
+sample.sheet$sample<-gsub("_T1","",sample.sheet$sample)
+sample.sheet$group<-gsub("_REP.*","",sample.sheet$sample)
+sample.sheet$Sample.ID<-gsub("_R1.*","",basename(sample.sheet$fastq_1))
+#read in metadata
+metadata<-read.csv("data/peru-vivax-atac.csv",header=T)
+metadata$Sample.ID<-gsub("_R1.*","",basename(metadata$Read1_filename))
+sample.sheet<-merge(sample.sheet,metadata,by.x="Sample.ID",by.y="Sample.ID") %>% arrange(sample)
+saveRDS(sample.sheet,"output/sample_sheet.valid.rds")
+```
+
+```{r}
+source("code/globalfun.R")
+#Load sample sheet
+sample.sheet<-readRDS("output/sample_sheet.valid.rds")
+```
+
+```{r}
+generate_datatable(apply(sample.sheet,2,basename),
+                   show.rownames = F)
+```

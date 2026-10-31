@@ -1,0 +1,175 @@
+---
+title: "Celltype deconvolution"
+bibliography: ../references.bib
+link-citations: true
+output:
+  workflowr::wflow_html:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    df_print: paged
+editor_options:
+  chunk_output_type: inline
+---
+
+# Introduction
+
+Cellular heterogeneity in bulk Assay for Transposase-Accessible Chromatin using sequencing (ATAC-seq) data can significantly confound downstream differential accessibility analyses and functional interpretations. Variations in chromatin accessibility profiles across heterogeneous tissue or blood samples may reflect altered cell-type proportions rather than genuine intracellular epigenetic modifications.
+
+To estimate and account for cell composition differences across biological samples, reference-based cell-type deconvolution is performed using **EPIC-ATAC** [@10.7554/eLife.26476]. EPIC-ATAC adapts constrained non-negative least squares (NNLS) regression frameworks originally established for transcriptomic deconvolution (EPIC) to assess cell-type-specific chromatin accessibility signatures.
+
+### Workflow Objectives
+
+1. **Marker Peak Quantification**: Quantify raw fragment counts across predefined cell-type-specific marker genomic regions using `Rsubread::featureCounts`.
+2. **Signal Normalization**: Convert raw read counts into Tags/Transcripts Per Million (TPM)-like accessibility values suitable for matrix deconvolution.
+3. **Reference Deconvolution**: Deconvolve sample accessibility profiles using the standard peripheral blood mononuclear cell reference (`atacRef_PBMC`).
+4. **Composition Visualization**: Format, inspect, and visualize relative immune cell proportions across experimental conditions (e.g., stimulated vs. unstimulated states).
+
+```{r setup,include=F,echo=FALSE}
+options(bitmapType='cairo')
+knitr::opts_chunk$set(
+  echo = F,
+  dpi = 150,
+  error=FALSE,
+  warning = F,
+  dev = c("png","pdf"),
+  message = F)
+```
+
+
+```{r setup2,warning=F,include=F}
+source("code/globalfun.R")
+```
+
+
+```{r read-in-sample-sheet}
+sample.sheet<-readRDS("output/sample_sheet.valid.rds")
+sample.sheet$group<-factor(sample.sheet$group.x)
+sample.sheet$batch<-factor(sample.sheet$batch)
+```
+
+
+
+# Read summarisation of cell type markers
+
+Read summarisation quantifies alignment fragments spanning cell-type marker locus boundaries. The reference marker regions provided within the EPIC-ATAC package are defined in Simplified Annotation Format (markerPeaks.saf), delineating open chromatin sites characteristic of distinct immune populations.
+
+Alignment files (.bam) generated via the NF-Core ATAC-seq processing pipeline are evaluated against these marker annotations using Rsubread::featureCounts.
+
+The resulting count matrix contains raw fragment counts across specified cell-type marker peaks and is saved as an intermediate RDS file for reproducible downstream scaling.
+
+```{r,eval=F}
+saf <- read.table(system.file("extdata", "markerPeaks.saf", package = "EPICATAC"),header = T)
+bam_files<-list.files("output/NFCore_ATACseq/bwa/merged_library",pattern="*.bam$", full.names = T)
+concensus_peaks<-"output/NFCore_ATACseq/bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.saf"
+fc.annot <- featureCounts(
+  files       = bam_files,
+  annot.ext   = saf,
+  isGTFAnnotation = FALSE,
+  isPairedEnd = TRUE,
+  fracOverlap = 0.2,
+  nthreads    = 8
+)
+saveRDS(fc.annot,file = "output/epic-atac-markers-counts.RDS")
+```
+
+# Run EPIC-ATAC
+The reads were first transformed using the *get_TPMlike_counts* function within **EPIC-ATAC** and then used to identify cell types within each sample.
+
+```{r, eval=FALSE}
+fc.annot<-readRDS(file = "output/epic-atac-markers-counts.RDS")
+counts <- fc.annot$counts
+normalized_counts <- EPICATAC:::get_TPMlike_counts(counts)
+out <- EPIC_ATAC(bulk = normalized_counts, reference = atacRef_PBMC, ATAC = TRUE)
+saveRDS(out, file = "output/epic_atac.RDS")
+```
+
+```{r}
+epic_atac_output <- readRDS("output/epic_atac.RDS")
+cell.fracs <- epic_atac_output$cellFractions %>% as.data.frame() %>%
+  tibble::rownames_to_column("Sample") %>%
+  mutate(Sample = paste0(gsub(".mL.*", "", Sample)))
+cell.fracs$Sample <- with(sample.sheet,
+                          paste0(cell.fracs$Sample, "_", 
+  sample.sheet$stim.unstim[match(cell.fracs$Sample, sample)]))
+cell.fracs <- cell.fracs %>% pivot_longer(cols = -1,
+                                          names_to = "Cell.type",
+                                          values_to = "Fraction")
+cell.fracs$Fraction<-round(cell.fracs$Fraction*100,1)
+```
+
+
+\FloatBarrier
+
+The stacked bar plot below illustrates estimated cell type composition across all processed samples. This visualisation helps assess potential sample composition biases, confirm sample purity, and evaluate cell population shifts upon biological stimulation.
+
+```{r bar-plot-cell-types, fig.height=12,fig.width=12, fig.cap="Fraction of cell types in each sample"}
+ggplot(cell.fracs, aes(
+  x = Sample, y = Fraction,fill=Cell.type)) +
+  geom_col() +
+  labs(title = "",
+       x = "",
+       y = "Fraction(%)",
+       fill= "Stats") +
+  geom_text(
+    aes(label = paste0(round(Fraction,0),"%")),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 12 
+    ),
+    axis.text.y = element_text(
+      size = 12 
+    ),
+    plot.title = element_text(hjust = 0.8)
+  )
+```
+
+\FloatBarrier
+
+# References
+
+This report cites computational algorithms, published methodologies, and reference datasets utilised throughout the analysis.
+
+<div id="refs"></div>
+
+\FloatBarrier
+
+# Appendix
+
+## All Code used in this analysis
+
+The following section provides a comprehensive overview of all the code chunks used in this analysis. Each code chunk is labeled with its corresponding name, allowing for easy reference and reproducibility of the analysis.
+
+```{r appendix, echo=FALSE, results='asis'}
+# Get all chunk labels in the document
+labels <- knitr::all_labels()
+
+# Exclude this specific chunk so it doesn't print its own generation code
+labels <- labels[labels != "appendix"]
+
+# Loop through each label, print a markdown header, and then the code block
+for (label in labels) {
+  # Print the header (you can change the #### to adjust the heading size)
+  cat("#### Chunk: `", label, "`\n\n", sep = "")
+  
+  # Print the opening of the code block
+  cat("```r\n")
+  
+  # Fetch and print the actual code from the chunk
+  cat(knitr::knit_code$get(label), sep = "\n")
+  
+  # Print the closing of the code block
+  cat("\n```\n\n")
+}
+```
+
+\newpage
+
+## Session Information

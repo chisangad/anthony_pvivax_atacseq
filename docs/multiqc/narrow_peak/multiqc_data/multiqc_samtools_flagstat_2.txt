@@ -1,0 +1,14 @@
+Sample	total_passed	total_failed	secondary_passed	secondary_failed	supplementary_passed	supplementary_failed	duplicates_passed	duplicates_failed	mapped_passed	mapped_failed	mapped_passed_pct	mapped_failed_pct	paired in sequencing_passed	paired in sequencing_failed	read1_passed	read1_failed	read2_passed	read2_failed	properly paired_passed	properly paired_failed	properly paired_passed_pct	properly paired_failed_pct	with itself and mate mapped_passed	with itself and mate mapped_failed	singletons_passed	singletons_failed	singletons_passed_pct	singletons_failed_pct	with mate mapped to a different chr_passed	with mate mapped to a different chr_failed	with mate mapped to a different chr (mapQ >= 5)_passed	with mate mapped to a different chr (mapQ >= 5)_failed	flagstat_total
+Asym_REP1	41901734	0	0	0	0	0	0	0	41901734	0	100.0	nan	41901734	0	20950867	0	20950867	0	41503394	0	99.05	nan	41901734	0	0	0	0.0	nan	0	0	0	0	41901734
+Asym_REP2	63874230	0	0	0	0	0	0	0	63874230	0	100.0	nan	63874230	0	31937115	0	31937115	0	62073016	0	97.18	nan	63874230	0	0	0	0.0	nan	0	0	0	0	63874230
+Asym_REP3	50445822	0	0	0	0	0	0	0	50445822	0	100.0	nan	50445822	0	25222911	0	25222911	0	49991666	0	99.1	nan	50445822	0	0	0	0.0	nan	0	0	0	0	50445822
+Asym_REP4	63675392	0	0	0	0	0	0	0	63675392	0	100.0	nan	63675392	0	31837696	0	31837696	0	63292504	0	99.4	nan	63675392	0	0	0	0.0	nan	0	0	0	0	63675392
+Asym_REP5	46016966	0	0	0	0	0	0	0	46016966	0	100.0	nan	46016966	0	23008483	0	23008483	0	44031794	0	95.69	nan	46016966	0	0	0	0.0	nan	0	0	0	0	46016966
+Asym_REP6	45650028	0	0	0	0	0	0	0	45650028	0	100.0	nan	45650028	0	22825014	0	22825014	0	45200866	0	99.02	nan	45650028	0	0	0	0.0	nan	0	0	0	0	45650028
+Asym_REP7	40669196	0	0	0	0	0	0	0	40669196	0	100.0	nan	40669196	0	20334598	0	20334598	0	40506586	0	99.6	nan	40669196	0	0	0	0.0	nan	0	0	0	0	40669196
+Control_REP1	29498958	0	0	0	0	0	0	0	29498958	0	100.0	nan	29498958	0	14749479	0	14749479	0	29073526	0	98.56	nan	29498958	0	0	0	0.0	nan	0	0	0	0	29498958
+Control_REP2	55085564	0	0	0	0	0	0	0	55085564	0	100.0	nan	55085564	0	27542782	0	27542782	0	53848890	0	97.75	nan	55085564	0	0	0	0.0	nan	0	0	0	0	55085564
+Control_REP3	55711600	0	0	0	0	0	0	0	55711600	0	100.0	nan	55711600	0	27855800	0	27855800	0	54948056	0	98.63	nan	55711600	0	0	0	0.0	nan	0	0	0	0	55711600
+Control_REP4	32215768	0	0	0	0	0	0	0	32215768	0	100.0	nan	32215768	0	16107884	0	16107884	0	32004682	0	99.34	nan	32215768	0	0	0	0.0	nan	0	0	0	0	32215768
+Control_REP5	33132666	0	0	0	0	0	0	0	33132666	0	100.0	nan	33132666	0	16566333	0	16566333	0	32767418	0	98.9	nan	33132666	0	0	0	0.0	nan	0	0	0	0	33132666
+Melb_control_REP1	29433892	0	0	0	0	0	0	0	29433892	0	100.0	nan	29433892	0	14716946	0	14716946	0	29257166	0	99.4	nan	29433892	0	0	0	0.0	nan	0	0	0	0	29433892

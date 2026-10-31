@@ -1,0 +1,287 @@
+﻿"Section Name"	"Series 1 (y)"	"Series 1 (value)"
+"Basic Statistics"	"Asym_REP1_T1_1"	1
+"Basic Statistics"	"Asym_REP1_T1_2"	1
+"Basic Statistics"	"Asym_REP2_T1_1"	1
+"Basic Statistics"	"Asym_REP2_T1_2"	1
+"Basic Statistics"	"Asym_REP3_T1_1"	1
+"Basic Statistics"	"Asym_REP3_T1_2"	1
+"Basic Statistics"	"Asym_REP4_T1_1"	1
+"Basic Statistics"	"Asym_REP4_T1_2"	1
+"Basic Statistics"	"Asym_REP5_T1_1"	1
+"Basic Statistics"	"Asym_REP5_T1_2"	1
+"Basic Statistics"	"Asym_REP6_T1_1"	1
+"Basic Statistics"	"Asym_REP6_T1_2"	1
+"Basic Statistics"	"Asym_REP7_T1_1"	1
+"Basic Statistics"	"Asym_REP7_T1_2"	1
+"Basic Statistics"	"Control_REP1_T1_1"	1
+"Basic Statistics"	"Control_REP1_T1_2"	1
+"Basic Statistics"	"Control_REP2_T1_1"	1
+"Basic Statistics"	"Control_REP2_T1_2"	1
+"Basic Statistics"	"Control_REP3_T1_1"	1
+"Basic Statistics"	"Control_REP3_T1_2"	1
+"Basic Statistics"	"Control_REP4_T1_1"	1
+"Basic Statistics"	"Control_REP4_T1_2"	1
+"Basic Statistics"	"Control_REP5_T1_1"	1
+"Basic Statistics"	"Control_REP5_T1_2"	1
+"Basic Statistics"	"Melb_control_REP1_T1_1"	1
+"Basic Statistics"	"Melb_control_REP1_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP1_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP1_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP2_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP2_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP3_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP3_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP4_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP4_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP5_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP5_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP6_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP6_T1_2"	1
+"Per Base Sequence Quality"	"Asym_REP7_T1_1"	1
+"Per Base Sequence Quality"	"Asym_REP7_T1_2"	1
+"Per Base Sequence Quality"	"Control_REP1_T1_1"	1
+"Per Base Sequence Quality"	"Control_REP1_T1_2"	1
+"Per Base Sequence Quality"	"Control_REP2_T1_1"	1
+"Per Base Sequence Quality"	"Control_REP2_T1_2"	1
+"Per Base Sequence Quality"	"Control_REP3_T1_1"	1
+"Per Base Sequence Quality"	"Control_REP3_T1_2"	1
+"Per Base Sequence Quality"	"Control_REP4_T1_1"	1
+"Per Base Sequence Quality"	"Control_REP4_T1_2"	1
+"Per Base Sequence Quality"	"Control_REP5_T1_1"	1
+"Per Base Sequence Quality"	"Control_REP5_T1_2"	1
+"Per Base Sequence Quality"	"Melb_control_REP1_T1_1"	1
+"Per Base Sequence Quality"	"Melb_control_REP1_T1_2"	1
+"Per Tile Sequence Quality"	"Asym_REP1_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP1_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP2_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP2_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP3_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP3_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP4_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP4_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP5_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP5_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP6_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP6_T1_2"	0.25
+"Per Tile Sequence Quality"	"Asym_REP7_T1_1"	0.25
+"Per Tile Sequence Quality"	"Asym_REP7_T1_2"	0.25
+"Per Tile Sequence Quality"	"Control_REP1_T1_1"	0.25
+"Per Tile Sequence Quality"	"Control_REP1_T1_2"	0.25
+"Per Tile Sequence Quality"	"Control_REP2_T1_1"	0.25
+"Per Tile Sequence Quality"	"Control_REP2_T1_2"	0.25
+"Per Tile Sequence Quality"	"Control_REP3_T1_1"	0.25
+"Per Tile Sequence Quality"	"Control_REP3_T1_2"	0.25
+"Per Tile Sequence Quality"	"Control_REP4_T1_1"	0.25
+"Per Tile Sequence Quality"	"Control_REP4_T1_2"	0.25
+"Per Tile Sequence Quality"	"Control_REP5_T1_1"	0.25
+"Per Tile Sequence Quality"	"Control_REP5_T1_2"	0.25
+"Per Tile Sequence Quality"	"Melb_control_REP1_T1_1"	0.25
+"Per Tile Sequence Quality"	"Melb_control_REP1_T1_2"	0.25
+"Per Sequence Quality Scores"	"Asym_REP1_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP1_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP2_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP2_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP3_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP3_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP4_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP4_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP5_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP5_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP6_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP6_T1_2"	1
+"Per Sequence Quality Scores"	"Asym_REP7_T1_1"	1
+"Per Sequence Quality Scores"	"Asym_REP7_T1_2"	1
+"Per Sequence Quality Scores"	"Control_REP1_T1_1"	1
+"Per Sequence Quality Scores"	"Control_REP1_T1_2"	1
+"Per Sequence Quality Scores"	"Control_REP2_T1_1"	1
+"Per Sequence Quality Scores"	"Control_REP2_T1_2"	1
+"Per Sequence Quality Scores"	"Control_REP3_T1_1"	1
+"Per Sequence Quality Scores"	"Control_REP3_T1_2"	1
+"Per Sequence Quality Scores"	"Control_REP4_T1_1"	1
+"Per Sequence Quality Scores"	"Control_REP4_T1_2"	1
+"Per Sequence Quality Scores"	"Control_REP5_T1_1"	1
+"Per Sequence Quality Scores"	"Control_REP5_T1_2"	1
+"Per Sequence Quality Scores"	"Melb_control_REP1_T1_1"	1
+"Per Sequence Quality Scores"	"Melb_control_REP1_T1_2"	1
+"Per Base Sequence Content"	"Asym_REP1_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP1_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP2_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP2_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP3_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP3_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP4_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP4_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP5_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP5_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP6_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP6_T1_2"	0.25
+"Per Base Sequence Content"	"Asym_REP7_T1_1"	0.25
+"Per Base Sequence Content"	"Asym_REP7_T1_2"	0.25
+"Per Base Sequence Content"	"Control_REP1_T1_1"	0.25
+"Per Base Sequence Content"	"Control_REP1_T1_2"	0.25
+"Per Base Sequence Content"	"Control_REP2_T1_1"	0.25
+"Per Base Sequence Content"	"Control_REP2_T1_2"	0.25
+"Per Base Sequence Content"	"Control_REP3_T1_1"	0.25
+"Per Base Sequence Content"	"Control_REP3_T1_2"	0.25
+"Per Base Sequence Content"	"Control_REP4_T1_1"	0.25
+"Per Base Sequence Content"	"Control_REP4_T1_2"	0.25
+"Per Base Sequence Content"	"Control_REP5_T1_1"	0.25
+"Per Base Sequence Content"	"Control_REP5_T1_2"	0.25
+"Per Base Sequence Content"	"Melb_control_REP1_T1_1"	0.25
+"Per Base Sequence Content"	"Melb_control_REP1_T1_2"	0.25
+"Per Sequence GC Content"	"Asym_REP1_T1_1"	0.25
+"Per Sequence GC Content"	"Asym_REP1_T1_2"	0.25
+"Per Sequence GC Content"	"Asym_REP2_T1_1"	0.25
+"Per Sequence GC Content"	"Asym_REP2_T1_2"	0.25
+"Per Sequence GC Content"	"Asym_REP3_T1_1"	1
+"Per Sequence GC Content"	"Asym_REP3_T1_2"	1
+"Per Sequence GC Content"	"Asym_REP4_T1_1"	1
+"Per Sequence GC Content"	"Asym_REP4_T1_2"	0.5
+"Per Sequence GC Content"	"Asym_REP5_T1_1"	1
+"Per Sequence GC Content"	"Asym_REP5_T1_2"	1
+"Per Sequence GC Content"	"Asym_REP6_T1_1"	0.25
+"Per Sequence GC Content"	"Asym_REP6_T1_2"	0.25
+"Per Sequence GC Content"	"Asym_REP7_T1_1"	1
+"Per Sequence GC Content"	"Asym_REP7_T1_2"	0.5
+"Per Sequence GC Content"	"Control_REP1_T1_1"	0.5
+"Per Sequence GC Content"	"Control_REP1_T1_2"	0.5
+"Per Sequence GC Content"	"Control_REP2_T1_1"	0.5
+"Per Sequence GC Content"	"Control_REP2_T1_2"	0.5
+"Per Sequence GC Content"	"Control_REP3_T1_1"	0.25
+"Per Sequence GC Content"	"Control_REP3_T1_2"	0.25
+"Per Sequence GC Content"	"Control_REP4_T1_1"	0.5
+"Per Sequence GC Content"	"Control_REP4_T1_2"	0.25
+"Per Sequence GC Content"	"Control_REP5_T1_1"	0.25
+"Per Sequence GC Content"	"Control_REP5_T1_2"	0.25
+"Per Sequence GC Content"	"Melb_control_REP1_T1_1"	1
+"Per Sequence GC Content"	"Melb_control_REP1_T1_2"	0.5
+"Per Base N Content"	"Asym_REP1_T1_1"	1
+"Per Base N Content"	"Asym_REP1_T1_2"	1
+"Per Base N Content"	"Asym_REP2_T1_1"	1
+"Per Base N Content"	"Asym_REP2_T1_2"	1
+"Per Base N Content"	"Asym_REP3_T1_1"	1
+"Per Base N Content"	"Asym_REP3_T1_2"	1
+"Per Base N Content"	"Asym_REP4_T1_1"	1
+"Per Base N Content"	"Asym_REP4_T1_2"	1
+"Per Base N Content"	"Asym_REP5_T1_1"	1
+"Per Base N Content"	"Asym_REP5_T1_2"	1
+"Per Base N Content"	"Asym_REP6_T1_1"	1
+"Per Base N Content"	"Asym_REP6_T1_2"	1
+"Per Base N Content"	"Asym_REP7_T1_1"	1
+"Per Base N Content"	"Asym_REP7_T1_2"	1
+"Per Base N Content"	"Control_REP1_T1_1"	1
+"Per Base N Content"	"Control_REP1_T1_2"	1
+"Per Base N Content"	"Control_REP2_T1_1"	1
+"Per Base N Content"	"Control_REP2_T1_2"	1
+"Per Base N Content"	"Control_REP3_T1_1"	1
+"Per Base N Content"	"Control_REP3_T1_2"	1
+"Per Base N Content"	"Control_REP4_T1_1"	1
+"Per Base N Content"	"Control_REP4_T1_2"	1
+"Per Base N Content"	"Control_REP5_T1_1"	1
+"Per Base N Content"	"Control_REP5_T1_2"	1
+"Per Base N Content"	"Melb_control_REP1_T1_1"	1
+"Per Base N Content"	"Melb_control_REP1_T1_2"	1
+"Sequence Length Distribution"	"Asym_REP1_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP1_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP2_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP2_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP3_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP3_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP4_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP4_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP5_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP5_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP6_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP6_T1_2"	0.5
+"Sequence Length Distribution"	"Asym_REP7_T1_1"	0.5
+"Sequence Length Distribution"	"Asym_REP7_T1_2"	0.5
+"Sequence Length Distribution"	"Control_REP1_T1_1"	0.5
+"Sequence Length Distribution"	"Control_REP1_T1_2"	0.5
+"Sequence Length Distribution"	"Control_REP2_T1_1"	0.5
+"Sequence Length Distribution"	"Control_REP2_T1_2"	0.5
+"Sequence Length Distribution"	"Control_REP3_T1_1"	0.5
+"Sequence Length Distribution"	"Control_REP3_T1_2"	0.5
+"Sequence Length Distribution"	"Control_REP4_T1_1"	0.5
+"Sequence Length Distribution"	"Control_REP4_T1_2"	0.5
+"Sequence Length Distribution"	"Control_REP5_T1_1"	0.5
+"Sequence Length Distribution"	"Control_REP5_T1_2"	0.5
+"Sequence Length Distribution"	"Melb_control_REP1_T1_1"	0.5
+"Sequence Length Distribution"	"Melb_control_REP1_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP1_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP1_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP2_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP2_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP3_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP3_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP4_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP4_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP5_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP5_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP6_T1_1"	0.5
+"Sequence Duplication Levels"	"Asym_REP6_T1_2"	0.5
+"Sequence Duplication Levels"	"Asym_REP7_T1_1"	1
+"Sequence Duplication Levels"	"Asym_REP7_T1_2"	0.5
+"Sequence Duplication Levels"	"Control_REP1_T1_1"	0.5
+"Sequence Duplication Levels"	"Control_REP1_T1_2"	0.5
+"Sequence Duplication Levels"	"Control_REP2_T1_1"	0.5
+"Sequence Duplication Levels"	"Control_REP2_T1_2"	0.5
+"Sequence Duplication Levels"	"Control_REP3_T1_1"	0.5
+"Sequence Duplication Levels"	"Control_REP3_T1_2"	0.5
+"Sequence Duplication Levels"	"Control_REP4_T1_1"	0.5
+"Sequence Duplication Levels"	"Control_REP4_T1_2"	0.5
+"Sequence Duplication Levels"	"Control_REP5_T1_1"	0.5
+"Sequence Duplication Levels"	"Control_REP5_T1_2"	0.5
+"Sequence Duplication Levels"	"Melb_control_REP1_T1_1"	0.5
+"Sequence Duplication Levels"	"Melb_control_REP1_T1_2"	0.5
+"Overrepresented Sequences"	"Asym_REP1_T1_1"	0.25
+"Overrepresented Sequences"	"Asym_REP1_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP2_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP2_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP3_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP3_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP4_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP4_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP5_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP5_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP6_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP6_T1_2"	0.25
+"Overrepresented Sequences"	"Asym_REP7_T1_1"	0.5
+"Overrepresented Sequences"	"Asym_REP7_T1_2"	0.25
+"Overrepresented Sequences"	"Control_REP1_T1_1"	0.5
+"Overrepresented Sequences"	"Control_REP1_T1_2"	0.25
+"Overrepresented Sequences"	"Control_REP2_T1_1"	0.5
+"Overrepresented Sequences"	"Control_REP2_T1_2"	0.25
+"Overrepresented Sequences"	"Control_REP3_T1_1"	0.5
+"Overrepresented Sequences"	"Control_REP3_T1_2"	0.25
+"Overrepresented Sequences"	"Control_REP4_T1_1"	0.5
+"Overrepresented Sequences"	"Control_REP4_T1_2"	0.25
+"Overrepresented Sequences"	"Control_REP5_T1_1"	0.5
+"Overrepresented Sequences"	"Control_REP5_T1_2"	0.25
+"Overrepresented Sequences"	"Melb_control_REP1_T1_1"	0.5
+"Overrepresented Sequences"	"Melb_control_REP1_T1_2"	0.25
+"Adapter Content"	"Asym_REP1_T1_1"	1
+"Adapter Content"	"Asym_REP1_T1_2"	1
+"Adapter Content"	"Asym_REP2_T1_1"	1
+"Adapter Content"	"Asym_REP2_T1_2"	1
+"Adapter Content"	"Asym_REP3_T1_1"	1
+"Adapter Content"	"Asym_REP3_T1_2"	1
+"Adapter Content"	"Asym_REP4_T1_1"	1
+"Adapter Content"	"Asym_REP4_T1_2"	1
+"Adapter Content"	"Asym_REP5_T1_1"	1
+"Adapter Content"	"Asym_REP5_T1_2"	1
+"Adapter Content"	"Asym_REP6_T1_1"	1
+"Adapter Content"	"Asym_REP6_T1_2"	1
+"Adapter Content"	"Asym_REP7_T1_1"	1
+"Adapter Content"	"Asym_REP7_T1_2"	1
+"Adapter Content"	"Control_REP1_T1_1"	1
+"Adapter Content"	"Control_REP1_T1_2"	1
+"Adapter Content"	"Control_REP2_T1_1"	1
+"Adapter Content"	"Control_REP2_T1_2"	1
+"Adapter Content"	"Control_REP3_T1_1"	1
+"Adapter Content"	"Control_REP3_T1_2"	1
+"Adapter Content"	"Control_REP4_T1_1"	1
+"Adapter Content"	"Control_REP4_T1_2"	1
+"Adapter Content"	"Control_REP5_T1_1"	1
+"Adapter Content"	"Control_REP5_T1_2"	1
+"Adapter Content"	"Melb_control_REP1_T1_1"	1
+"Adapter Content"	"Melb_control_REP1_T1_2"	1

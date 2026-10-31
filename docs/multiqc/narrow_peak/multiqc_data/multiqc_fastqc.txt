@@ -1,0 +1,27 @@
+Sample	Filename	File type	Encoding	Total Sequences	Sequences flagged as poor quality	Sequence length	%GC	total_deduplicated_percentage	avg_sequence_length	basic_statistics	per_base_sequence_quality	per_tile_sequence_quality	per_sequence_quality_scores	per_base_sequence_content	per_sequence_gc_content	per_base_n_content	sequence_length_distribution	sequence_duplication_levels	overrepresented_sequences	adapter_content
+Asym_REP1_T1_1	Asym_REP1_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	47041032.0	0.0	61.0	47.0	57.75113713260941	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP1_T1_2	Asym_REP1_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	47041032.0	0.0	61.0	51.0	56.21613214727235	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP2_T1_1	Asym_REP2_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	74010219.0	0.0	61.0	47.0	57.640903967376076	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP2_T1_2	Asym_REP2_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	74010219.0	0.0	61.0	49.0	57.7525500693868	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP3_T1_1	Asym_REP3_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	58061685.0	0.0	61.0	48.0	58.73200197462778	61.0	pass	pass	fail	pass	fail	warn	pass	pass	warn	warn	fail
+Asym_REP3_T1_2	Asym_REP3_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	58061685.0	0.0	61.0	49.0	59.141867289576886	61.0	pass	pass	fail	pass	fail	warn	pass	pass	warn	fail	fail
+Asym_REP4_T1_1	Asym_REP4_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	66412240.0	0.0	61.0	47.0	59.97196305423407	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP4_T1_2	Asym_REP4_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	66412240.0	0.0	61.0	49.0	60.05191602830594	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP5_T1_1	Asym_REP5_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	47295158.0	0.0	61.0	48.0	65.36186399675663	61.0	pass	pass	fail	pass	fail	pass	pass	pass	warn	warn	fail
+Asym_REP5_T1_2	Asym_REP5_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	47295158.0	0.0	61.0	48.0	65.55245146866578	61.0	pass	pass	fail	pass	fail	pass	pass	pass	warn	fail	fail
+Asym_REP6_T1_1	Asym_REP6_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	50584753.0	0.0	61.0	49.0	57.10653294025821	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP6_T1_2	Asym_REP6_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	50584753.0	0.0	61.0	52.0	56.21259493313717	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Asym_REP7_T1_1	Asym_REP7_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	36916900.0	0.0	61.0	47.0	71.84484235462577	61.0	pass	pass	fail	pass	fail	pass	pass	pass	pass	warn	fail
+Asym_REP7_T1_2	Asym_REP7_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	36916900.0	0.0	61.0	48.0	68.64839959965062	61.0	pass	pass	fail	pass	fail	warn	pass	pass	warn	fail	fail
+Control_REP1_T1_1	Control_REP1_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	40525057.0	0.0	61.0	48.0	52.552263112427866	61.0	pass	pass	fail	pass	fail	warn	pass	pass	warn	warn	fail
+Control_REP1_T1_2	Control_REP1_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	40525057.0	0.0	61.0	50.0	50.32231185252844	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP2_T1_1	Control_REP2_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	70046483.0	0.0	61.0	48.0	52.87832213374987	61.0	pass	pass	fail	pass	fail	pass	pass	pass	warn	warn	fail
+Control_REP2_T1_2	Control_REP2_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	70046483.0	0.0	61.0	50.0	53.09944966039141	61.0	pass	pass	fail	pass	fail	warn	pass	pass	warn	fail	fail
+Control_REP3_T1_1	Control_REP3_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	57937773.0	0.0	61.0	47.0	62.96797166188236	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP3_T1_2	Control_REP3_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	57937773.0	0.0	61.0	50.0	62.41930863756831	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP4_T1_1	Control_REP4_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	46863401.0	0.0	61.0	48.0	51.82473580961741	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP4_T1_2	Control_REP4_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	46863401.0	0.0	61.0	51.0	51.63574738142434	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP5_T1_1	Control_REP5_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	38465270.0	0.0	61.0	47.0	58.08515557055577	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Control_REP5_T1_2	Control_REP5_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	38465270.0	0.0	61.0	51.0	56.59078948150379	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Melb_control_REP1_T1_1	Melb_control_REP1_T1_1.gz	Conventional base calls	Sanger / Illumina 1.9	41326327.0	0.0	61.0	49.0	52.09302636733389	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail
+Melb_control_REP1_T1_2	Melb_control_REP1_T1_2.gz	Conventional base calls	Sanger / Illumina 1.9	41326327.0	0.0	61.0	51.0	51.61604669264999	61.0	pass	pass	fail	pass	fail	fail	pass	pass	warn	fail	fail

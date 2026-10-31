@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Celltype deconvolution</title>
+
+<script src="site_libs/header-attrs-2.32/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+<script src="site_libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+<link rel="icon" href="https://github.com/workflowr/workflowr-assets/raw/main/img/reproducible.png">
+<!-- Add a small amount of space between sections. -->
+<style type="text/css">
+div.section {
+  padding-top: 12px;
+}
+</style>
+
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+<style type="text/css">
+/* for pandoc --citeproc since 2.11 */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "\e258";
+  font-family: 'Glyphicons Halflings';
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">ATAC-seq analysis of Monocytes from P-vivax</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Background</a>
+</li>
+<li>
+  <a href="preprocessing.html">Pre-processing and QC Checks</a>
+</li>
+<li>
+  <a href="peaks.html">Peak Calling and QC Check</a>
+</li>
+<li>
+  <a href="differential_analysis.html">Differential Accessibility Analysis</a>
+</li>
+<li>
+  <a href="celltypecheck.html">Celltype Deconvolution</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Celltype deconvolution</h1>
+
+</div>
+
+
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-report" data-toggle="collapse" data-target="#workflowr-report">
+<span class="glyphicon glyphicon-list" aria-hidden="true"></span>
+workflowr <span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span>
+</button>
+</p>
+<div id="workflowr-report" class="collapse">
+<ul class="nav nav-tabs">
+<li class="active">
+<a data-toggle="tab" href="#summary">Summary</a>
+</li>
+<li>
+<a data-toggle="tab" href="#checks"> Checks <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
+</a>
+</li>
+<li>
+<a data-toggle="tab" href="#versions">Past versions</a>
+</li>
+</ul>
+<div class="tab-content">
+<div id="summary" class="tab-pane fade in active">
+<p>
+<strong>Last updated:</strong> 2026-11-01
+</p>
+<p>
+<strong>Checks:</strong> <span
+class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> 7
+<span class="glyphicon glyphicon-exclamation-sign text-danger"
+aria-hidden="true"></span> 0
+</p>
+<p>
+<strong>Knit directory:</strong> <code>anthony_pvivax_atacseq/</code>
+<span class="glyphicon glyphicon-question-sign" aria-hidden="true"
+title="This is the local directory in which the code in this file was executed.">
+</span>
+</p>
+<p>
+This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
+analysis was created with <a
+  href="https://github.com/workflowr/workflowr">workflowr</a> (version
+1.7.2). The <em>Checks</em> tab describes the reproducibility checks
+that were applied when the results were created. The <em>Past
+versions</em> tab lists the development history.
+</p>
+<hr>
+</div>
+<div id="checks" class="tab-pane fade">
+<div id="workflowr-checks" class="panel-group">
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRMarkdownfilestronguptodate">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>R Markdown file:</strong> up-to-date
+</a>
+</p>
+</div>
+<div id="strongRMarkdownfilestronguptodate"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great! Since the R Markdown file has been committed to the Git
+repository, you know the exact version of the code that produced these
+results.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongEnvironmentstrongempty">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Environment:</strong> empty </a>
+</p>
+</div>
+<div id="strongEnvironmentstrongempty" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! The global environment was empty. Objects defined in the
+global environment can affect the analysis in your R Markdown file in
+unknown ways. For reproduciblity it’s best to always run the code in an
+empty environment.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSeedstrongcodesetseed20261031code">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Seed:</strong>
+<code>set.seed(20261031)</code> </a>
+</p>
+</div>
+<div id="strongSeedstrongcodesetseed20261031code"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>The command <code>set.seed(20261031)</code> was run prior to running
+the code in the R Markdown file. Setting a seed ensures that any results
+that rely on randomness, e.g. subsampling or permutations, are
+reproducible.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongSessioninformationstrongrecorded">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Session information:</strong>
+recorded </a>
+</p>
+</div>
+<div id="strongSessioninformationstrongrecorded"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Recording the operating system, R version, and package
+versions is critical for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongCachestrongnone">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Cache:</strong> none </a>
+</p>
+</div>
+<div id="strongCachestrongnone" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Nice! There were no cached chunks for this analysis, so you can be
+confident that you successfully produced the results during this
+run.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongFilepathsstrongrelative">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>File paths:</strong> relative </a>
+</p>
+</div>
+<div id="strongFilepathsstrongrelative" class="panel-collapse collapse">
+<div class="panel-body">
+<p>Great job! Using relative paths to the files within your workflowr
+project makes it easier to run your code on other machines.</p>
+</div>
+</div>
+</div>
+<div class="panel panel-default">
+<div class="panel-heading">
+<p class="panel-title">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomchisangadanthonypvivaxatacseqtree4deb6a8e84058f4900e75a70a78beb061507a0dbtargetblank4deb6a8a">
+<span class="glyphicon glyphicon-ok text-success"
+aria-hidden="true"></span> <strong>Repository version:</strong>
+<a href="https://github.com/chisangad/anthony_pvivax_atacseq/tree/4deb6a8e84058f4900e75a70a78beb061507a0db" target="_blank">4deb6a8</a>
+</a>
+</p>
+</div>
+<div
+id="strongRepositoryversionstrongahrefhttpsgithubcomchisangadanthonypvivaxatacseqtree4deb6a8e84058f4900e75a70a78beb061507a0dbtargetblank4deb6a8a"
+class="panel-collapse collapse">
+<div class="panel-body">
+<p>
+Great! You are using Git for version control. Tracking code development
+and connecting the code version to the results is critical for
+reproducibility.
+</p>
+<p>
+The results in this page were generated with repository version
+<a href="https://github.com/chisangad/anthony_pvivax_atacseq/tree/4deb6a8e84058f4900e75a70a78beb061507a0db" target="_blank">4deb6a8</a>.
+See the <em>Past versions</em> tab to see a history of the changes made
+to the R Markdown and HTML files.
+</p>
+<p>
+Note that you need to be careful to ensure that all relevant files for
+the analysis have been committed to Git prior to generating the results
+(you can use <code>wflow_publish</code> or
+<code>wflow_git_commit</code>). workflowr only checks the R Markdown
+file, but you know if there are other scripts or data files that it
+depends on. Below is the status of the Git repository when the results
+were generated:
+</p>
+<pre><code>
+Untracked files:
+    Untracked:  .Rprofile
+    Untracked:  .Rproj.user/
+    Untracked:  README.md
+    Untracked:  _workflowr.yml
+    Untracked:  anthony_pvivax_atacseq.Rproj
+
+</code></pre>
+<p>
+Note that any generated files, e.g. HTML, png, CSS, etc., are not
+included in this status report because it is ok for generated content to
+have uncommitted changes.
+</p>
+</div>
+</div>
+</div>
+</div>
+<hr>
+</div>
+<div id="versions" class="tab-pane fade">
+<p>
+These are the previous versions of the repository in which changes were
+made to the R Markdown (<code>analysis/celltypecheck.Rmd</code>) and
+HTML (<code>docs/celltypecheck.html</code>) files. If you’ve configured
+a remote Git repository (see <code>?wflow_git_remote</code>), click on
+the hyperlinks in the table below to view the files as they were in that
+past version.
+</p>
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+File
+</th>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+<th>
+Message
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/chisangad/anthony_pvivax_atacseq/blob/4deb6a8e84058f4900e75a70a78beb061507a0db/analysis/celltypecheck.Rmd" target="_blank">4deb6a8</a>
+</td>
+<td>
+chisangad
+</td>
+<td>
+2026-11-01
+</td>
+<td>
+first commit
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/chisangad/anthony_pvivax_atacseq/4deb6a8e84058f4900e75a70a78beb061507a0db/docs/celltypecheck.html" target="_blank">4deb6a8</a>
+</td>
+<td>
+chisangad
+</td>
+<td>
+2026-11-01
+</td>
+<td>
+first commit
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr>
+</div>
+</div>
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Cellular heterogeneity in bulk Assay for Transposase-Accessible
+Chromatin using sequencing (ATAC-seq) data can significantly confound
+downstream differential accessibility analyses and functional
+interpretations. Variations in chromatin accessibility profiles across
+heterogeneous tissue or blood samples may reflect altered cell-type
+proportions rather than genuine intracellular epigenetic
+modifications.</p>
+<p>To estimate and account for cell composition differences across
+biological samples, reference-based cell-type deconvolution is performed
+using <strong>EPIC-ATAC</strong> <span class="citation">(<a
+href="#ref-10.7554/eLife.26476"><strong>10.7554/eLife.26476?</strong></a>)</span>.
+EPIC-ATAC adapts constrained non-negative least squares (NNLS)
+regression frameworks originally established for transcriptomic
+deconvolution (EPIC) to assess cell-type-specific chromatin
+accessibility signatures.</p>
+<div id="workflow-objectives" class="section level3">
+<h3>Workflow Objectives</h3>
+<ol style="list-style-type: decimal">
+<li><strong>Marker Peak Quantification</strong>: Quantify raw fragment
+counts across predefined cell-type-specific marker genomic regions using
+<code>Rsubread::featureCounts</code>.</li>
+<li><strong>Signal Normalization</strong>: Convert raw read counts into
+Tags/Transcripts Per Million (TPM)-like accessibility values suitable
+for matrix deconvolution.</li>
+<li><strong>Reference Deconvolution</strong>: Deconvolve sample
+accessibility profiles using the standard peripheral blood mononuclear
+cell reference (<code>atacRef_PBMC</code>).</li>
+<li><strong>Composition Visualization</strong>: Format, inspect, and
+visualize relative immune cell proportions across experimental
+conditions (e.g., stimulated vs. unstimulated states).</li>
+</ol>
+</div>
+</div>
+<div id="read-summarisation-of-cell-type-markers"
+class="section level1">
+<h1>Read summarisation of cell type markers</h1>
+<p>Read summarisation quantifies alignment fragments spanning cell-type
+marker locus boundaries. The reference marker regions provided within
+the EPIC-ATAC package are defined in Simplified Annotation Format
+(markerPeaks.saf), delineating open chromatin sites characteristic of
+distinct immune populations.</p>
+<p>Alignment files (.bam) generated via the NF-Core ATAC-seq processing
+pipeline are evaluated against these marker annotations using
+Rsubread::featureCounts.</p>
+<p>The resulting count matrix contains raw fragment counts across
+specified cell-type marker peaks and is saved as an intermediate RDS
+file for reproducible downstream scaling.</p>
+</div>
+<div id="run-epic-atac" class="section level1">
+<h1>Run EPIC-ATAC</h1>
+<p>The reads were first transformed using the
+<em>get_TPMlike_counts</em> function within <strong>EPIC-ATAC</strong>
+and then used to identify cell types within each sample.</p>
+<p>The stacked bar plot below illustrates estimated cell type
+composition across all processed samples. This visualisation helps
+assess potential sample composition biases, confirm sample purity, and
+evaluate cell population shifts upon biological stimulation.</p>
+<div class="figure" style="text-align: center">
+<img src="figure/celltypecheck.Rmd/bar-plot-cell-types-1.png" alt="Fraction of cell types in each sample" width="1800" />
+<p class="caption">
+Fraction of cell types in each sample
+</p>
+</div>
+<p><a href="data:application/pdf;base64,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bGVzc2kgL2dyYXZlIC9hY3V0ZSAvY2lyY3VtZmxleCAvdGlsZGUgL21hY3JvbiAvYnJldmUgL2RvdGFjY2VudAovZGllcmVzaXMgLy5ub3RkZWYgL3JpbmcgL2NlZGlsbGEgLy5ub3RkZWYgL2h1bmdhcnVtbGF1dCAvb2dvbmVrIC9jYXJvbiAvc3BhY2VdCj4+CmVuZG9iagoxMCAwIG9iago8PCAvVHlwZSAvRm9udCAvU3VidHlwZSAvVHlwZTEgL05hbWUgL0YyIC9CYXNlRm9udCAvSGVsdmV0aWNhCi9FbmNvZGluZyA5IDAgUiA+PgplbmRvYmoKeHJlZgowIDExCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAyMSAwMDAwMCBuIAowMDAwMDAwMTYzIDAwMDAwIG4gCjAwMDAwMDMyNzUgMDAwMDAgbiAKMDAwMDAwMzM1OCAwMDAwMCBuIAowMDAwMDAzNDcwIDAwMDAwIG4gCjAwMDAwMDM1MDMgMDAwMDAgbiAKMDAwMDAwMDIxMiAwMDAwMCBuIAowMDAwMDAwMjkyIDAwMDAwIG4gCjAwMDAwMDYxOTggMDAwMDAgbiAKMDAwMDAwNjQ1NSAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDExIC9JbmZvIDEgMCBSIC9Sb290IDIgMCBSID4+CnN0YXJ0eHJlZgo2NTUyCiUlRU9GCg==" download="bar-plot-cell-types-1.pdf">Download
+bar-plot-cell-types-1.pdf</a></p>
+</div>
+<div id="references" class="section level1">
+<h1>References</h1>
+<p>This report cites computational algorithms, published methodologies,
+and reference datasets utilised throughout the analysis.</p>
+<div id="refs">
+
+</div>
+</div>
+<div id="appendix" class="section level1">
+<h1>Appendix</h1>
+<div id="all-code-used-in-this-analysis" class="section level2">
+<h2>All Code used in this analysis</h2>
+<p>The following section provides a comprehensive overview of all the
+code chunks used in this analysis. Each code chunk is labeled with its
+corresponding name, allowing for easy reference and reproducibility of
+the analysis.</p>
+<div id="chunk-seed-set-by-workflowr" class="section level4">
+<h4>Chunk: <code>seed-set-by-workflowr</code></h4>
+<pre class="r"><code>set.seed(20261031)
+</code></pre>
+</div>
+<div id="chunk-setup" class="section level4">
+<h4>Chunk: <code>setup</code></h4>
+<pre class="r"><code>options(bitmapType=&#39;cairo&#39;)
+knitr::opts_chunk$set(
+  echo = F,
+  dpi = 150,
+  error=FALSE,
+  warning = F,
+  dev = c(&quot;png&quot;,&quot;pdf&quot;),
+  message = F)
+</code></pre>
+</div>
+<div id="chunk-setup2" class="section level4">
+<h4>Chunk: <code>setup2</code></h4>
+<pre class="r"><code>source(&quot;code/globalfun.R&quot;)
+</code></pre>
+</div>
+<div id="chunk-read-in-sample-sheet" class="section level4">
+<h4>Chunk: <code>read-in-sample-sheet</code></h4>
+<pre class="r"><code>sample.sheet&lt;-readRDS(&quot;output/sample_sheet.valid.rds&quot;)
+sample.sheet$group&lt;-factor(sample.sheet$group.x)
+sample.sheet$batch&lt;-factor(sample.sheet$batch)
+</code></pre>
+</div>
+<div id="chunk-unnamed-chunk-1" class="section level4">
+<h4>Chunk: <code>unnamed-chunk-1</code></h4>
+<pre class="r"><code>saf &lt;- read.table(system.file(&quot;extdata&quot;, &quot;markerPeaks.saf&quot;, package = &quot;EPICATAC&quot;),header = T)
+bam_files&lt;-list.files(&quot;output/NFCore_ATACseq/bwa/merged_library&quot;,pattern=&quot;*.bam$&quot;, full.names = T)
+concensus_peaks&lt;-&quot;output/NFCore_ATACseq/bwa/merged_library/macs2/narrow_peak/consensus/consensus_peaks.mLb.clN.saf&quot;
+fc.annot &lt;- featureCounts(
+  files       = bam_files,
+  annot.ext   = saf,
+  isGTFAnnotation = FALSE,
+  isPairedEnd = TRUE,
+  fracOverlap = 0.2,
+  nthreads    = 8
+)
+saveRDS(fc.annot,file = &quot;output/epic-atac-markers-counts.RDS&quot;)
+</code></pre>
+</div>
+<div id="chunk-unnamed-chunk-2" class="section level4">
+<h4>Chunk: <code>unnamed-chunk-2</code></h4>
+<pre class="r"><code>fc.annot&lt;-readRDS(file = &quot;output/epic-atac-markers-counts.RDS&quot;)
+counts &lt;- fc.annot$counts
+normalized_counts &lt;- EPICATAC:::get_TPMlike_counts(counts)
+out &lt;- EPIC_ATAC(bulk = normalized_counts, reference = atacRef_PBMC, ATAC = TRUE)
+saveRDS(out, file = &quot;output/epic_atac.RDS&quot;)
+</code></pre>
+</div>
+<div id="chunk-unnamed-chunk-3" class="section level4">
+<h4>Chunk: <code>unnamed-chunk-3</code></h4>
+<pre class="r"><code>epic_atac_output &lt;- readRDS(&quot;output/epic_atac.RDS&quot;)
+cell.fracs &lt;- epic_atac_output$cellFractions %&gt;% as.data.frame() %&gt;%
+  tibble::rownames_to_column(&quot;Sample&quot;) %&gt;%
+  mutate(Sample = paste0(gsub(&quot;.mL.*&quot;, &quot;&quot;, Sample)))
+cell.fracs$Sample &lt;- with(sample.sheet,
+                          paste0(cell.fracs$Sample, &quot;_&quot;, 
+  sample.sheet$stim.unstim[match(cell.fracs$Sample, sample)]))
+cell.fracs &lt;- cell.fracs %&gt;% pivot_longer(cols = -1,
+                                          names_to = &quot;Cell.type&quot;,
+                                          values_to = &quot;Fraction&quot;)
+cell.fracs$Fraction&lt;-round(cell.fracs$Fraction*100,1)
+</code></pre>
+</div>
+<div id="chunk-bar-plot-cell-types" class="section level4">
+<h4>Chunk: <code>bar-plot-cell-types</code></h4>
+<pre class="r"><code>ggplot(cell.fracs, aes(
+  x = Sample, y = Fraction,fill=Cell.type)) +
+  geom_col() +
+  labs(title = &quot;&quot;,
+       x = &quot;&quot;,
+       y = &quot;Fraction(%)&quot;,
+       fill= &quot;Stats&quot;) +
+  geom_text(
+    aes(label = paste0(round(Fraction,0),&quot;%&quot;)),
+    position = position_stack(vjust = 0.5),
+    size = 3
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      vjust = 1,
+      size = 12 
+    ),
+    axis.text.y = element_text(
+      size = 12 
+    ),
+    plot.title = element_text(hjust = 0.8)
+  )
+</code></pre>
+</div>
+<div id="chunk-session-info-chunk-inserted-by-workflowr"
+class="section level4">
+<h4>Chunk: <code>session-info-chunk-inserted-by-workflowr</code></h4>
+<pre class="r"><code>sessionInfo()
+</code></pre>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session Information</h2>
+<br>
+<p>
+<button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
+<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+Session information
+</button>
+</p>
+<div id="workflowr-sessioninfo" class="collapse">
+<pre><code>R version 4.6.0 (2026-04-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.6.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: Australia/Melbourne
+tzcode source: internal
+
+attached base packages:
+[1] grid      stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] downloadthis_0.5.0    DT_0.34.0             htmltools_0.5.9      
+ [4] sva_3.60.0            BiocParallel_1.46.0   genefilter_1.94.0    
+ [7] mgcv_1.9-4            nlme_3.1-169          edgeR_4.10.5         
+[10] limma_3.68.5          formatR_1.14          viridis_0.6.5        
+[13] viridisLite_0.4.3     patchwork_1.3.2       ggseqlogo_0.2.2      
+[16] ggvenn_0.1.19         ggplotify_0.1.4       ggpubr_1.0.0         
+[19] ggrepel_0.9.8         ComplexHeatmap_2.28.0 tidyr_1.3.2          
+[22] dplyr_1.2.1           ggplot2_4.0.3         knitr_1.52           
+[25] workflowr_1.7.2      
+
+loaded via a namespace (and not attached):
+  [1] RColorBrewer_1.1-3    rstudioapi_0.19.0     jsonlite_2.0.0       
+  [4] shape_1.4.6.1         magrittr_2.0.5        farver_2.1.2         
+  [7] rmarkdown_2.32        GlobalOptions_0.1.4   fs_2.1.0             
+ [10] vctrs_0.7.3           memoise_2.0.1         rstatix_1.1.0        
+ [13] broom_1.0.13          Formula_1.2-6         gridGraphics_0.5-1   
+ [16] sass_0.4.10           bslib_0.12.0          htmlwidgets_1.6.4    
+ [19] cachem_1.1.0          whisker_0.4.1         mime_0.13            
+ [22] lifecycle_1.0.5       iterators_1.0.14      pkgconfig_2.0.3      
+ [25] Matrix_1.7-6          R6_2.6.1              fastmap_1.2.0        
+ [28] MatrixGenerics_1.24.0 clue_0.3-68           digest_0.6.39        
+ [31] colorspace_2.1-4      AnnotationDbi_1.74.0  S4Vectors_0.50.3     
+ [34] rprojroot_2.1.1       RSQLite_3.53.3        labeling_0.4.3       
+ [37] httr_1.4.9            abind_1.4-8           compiler_4.6.0       
+ [40] bit64_4.8.6           withr_3.0.3           doParallel_1.0.17    
+ [43] S7_0.2.2              backports_1.5.1       carData_3.0-6        
+ [46] DBI_1.3.0             ggsignif_0.6.4        rappdirs_0.3.4       
+ [49] rjson_0.2.23          tools_4.6.0           otel_0.2.0           
+ [52] httpuv_1.6.17         glue_1.8.1            callr_3.8.0          
+ [55] promises_1.5.0        getPass_0.2-4         cluster_2.1.8.3      
+ [58] generics_0.1.4        gtable_0.3.6          car_3.1-5            
+ [61] XVector_0.52.0        BiocGenerics_0.58.1   foreach_1.5.2        
+ [64] pillar_1.11.1         stringr_1.6.0         yulab.utils_0.2.5    
+ [67] later_1.4.8           circlize_0.4.18       splines_4.6.0        
+ [70] lattice_0.23-1        survival_3.8-6        bit_4.6.0            
+ [73] annotate_1.90.0       tidyselect_1.2.1      locfit_1.5-9.12      
+ [76] Biostrings_2.80.2     git2r_0.36.2          gridExtra_2.3.1      
+ [79] IRanges_2.46.0        Seqinfo_1.2.0         stats4_4.6.0         
+ [82] xfun_0.61             Biobase_2.72.0        statmod_1.5.2        
+ [85] matrixStats_1.5.0     stringi_1.8.9         yaml_2.3.12          
+ [88] evaluate_1.0.5        codetools_0.2-20      tibble_3.3.1         
+ [91] cli_3.6.6             xtable_1.8-8          processx_3.9.0       
+ [94] jquerylib_0.1.4       dichromat_2.0-1       Rcpp_1.1.2           
+ [97] png_0.1-9             XML_3.99-0.25         parallel_4.6.0       
+[100] blob_1.3.0            scales_1.4.0          purrr_1.2.2          
+[103] crayon_1.5.3          GetoptLong_1.1.1      rlang_1.3.0          
+[106] KEGGREST_1.52.2      </code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<!-- Adjust MathJax settings so that all math formulae are shown using
+TeX fonts only; see
+https://docs.mathjax.org/en/latest/web/configuration.html. This will make
+the presentation more consistent at the cost of the webpage sometimes
+taking slightly longer to load. Note that this only works because the
+footer is added to webpages before the MathJax javascript. -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+</script>
+
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

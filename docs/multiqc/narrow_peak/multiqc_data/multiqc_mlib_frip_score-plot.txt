@@ -1,0 +1,14 @@
+Sample	Asym_REP1	Asym_REP2	Asym_REP3	Asym_REP4	Asym_REP5	Asym_REP6	Asym_REP7	Control_REP1	Control_REP2	Control_REP3	Control_REP4	Control_REP5	Melb_control_REP1
+Asym_REP1	0.089922												
+Asym_REP2		0.0155216											
+Asym_REP3			0.0346652										
+Asym_REP4				0.085293									
+Asym_REP5					0.0283915								
+Asym_REP6						0.149872							
+Asym_REP7							0.0797662						
+Control_REP1								0.083759					
+Control_REP2									0.0567971				
+Control_REP3										0.0711805			
+Control_REP4											0.0911264		
+Control_REP5												0.0869567	
+Melb_control_REP1													0.159705
